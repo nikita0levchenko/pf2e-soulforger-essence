@@ -1,0 +1,36 @@
+{
+  "img": "systems/pf2e/icons/spells/positive-luminance.webp",
+  "ownership": {
+    "default": 2
+  },
+  "effects": [],
+  "flags": {
+    "soulforger-essence": {
+      "asset": true,
+      "version": "1.2.1",
+      "route": "manifest"
+    }
+  },
+  "_id": "SEssenceGate0001",
+  "name": "Soulforger: служебный эффект (manifest)",
+  "type": "effect",
+  "system": {
+    "description": {
+      "value": "<p>Служебный эффект. При его применении модуль открывает выбор эссенции.</p>"
+    },
+    "duration": {
+      "value": -1,
+      "unit": "unlimited",
+      "expiry": null
+    },
+    "rules": [],
+    "traits": {
+      "value": []
+    }
+  },
+  "_stats": {
+    "systemId": "pf2e",
+    "systemVersion": "8.6.1",
+    "coreVersion": "14.369"
+  }
+}

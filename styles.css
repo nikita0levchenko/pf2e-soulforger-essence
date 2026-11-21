@@ -1,0 +1,53 @@
+.soulforger-essence-dialog select { width: 100%; min-height: 2.25rem; }
+.soulforger-essence-dialog p { line-height: 1.45; }
+.soulforger-essence-control { display: flex; align-items: center; gap: 8px; width: 100%; }
+.soulforger-essence-select { flex: 1; min-width: 0; }
+.soulforger-essence-dialog button.soulforger-essence-select-trigger {
+  display: flex; align-items: center; gap: 8px; justify-content: flex-start;
+  width: 100%; min-height: 38px; height: auto; margin: 0; padding: 3px 8px;
+  border: 1px solid var(--input-border-color, var(--color-border-light-tertiary, #7778));
+  background: var(--input-background-color, #8881); color: inherit; font: inherit; text-align: left;
+}
+.soulforger-essence-selected-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.soulforger-essence-choice-image {
+  flex: 0 0 28px; width: 28px; height: 28px; object-fit: contain;
+  border: 1px solid #7777; border-radius: 3px;
+}
+.soulforger-essence-choice-image[hidden] { display: none; }
+.soulforger-essence-options {
+  position: fixed; inset: auto; z-index: 100000; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 2px; overflow-y: auto; overscroll-behavior: contain;
+  margin: 0; padding: 4px; border: 1px solid var(--color-border-light-tertiary, #777); border-radius: 4px;
+  background: #f7f5ef; background: light-dark(#f7f5ef, #222634);
+  color: var(--color-text-primary, inherit); box-shadow: 0 4px 14px #0006; font: inherit;
+}
+.soulforger-essence-options[hidden] { display: none !important; }
+button.soulforger-essence-option {
+  display: flex; flex-shrink: 0; align-items: center; justify-content: flex-start; gap: 8px;
+  width: 100%; min-height: 38px; height: auto; margin: 0; padding: 5px 7px;
+  border: 0; border-radius: 3px; background: transparent; box-shadow: none;
+  color: inherit; font: inherit; text-align: left; line-height: 1.35;
+}
+.soulforger-essence-option span { overflow-wrap: anywhere; }
+.soulforger-essence-option:hover,
+.soulforger-essence-option:focus-visible,
+.soulforger-essence-option[aria-selected="true"] { background: var(--color-bg-trait, #8883); }
+.soulforger-essence-dialog button.soulforger-essence-info {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 30px; width: 30px; min-width: 30px; height: 30px; padding: 0; margin: 0;
+  border: 1px solid var(--color-border-light-tertiary, #7778); background: transparent;
+  box-shadow: none; color: inherit; cursor: pointer;
+}
+.soulforger-essence-info:hover { color: var(--color-text-hyperlink, #b45b23); }
+.soulforger-essence-info:focus-visible { outline: 2px solid var(--color-text-hyperlink, #b45b23); outline-offset: 1px; }
+.soulforger-essence-description { line-height: 1.5; }
+.soulforger-essence-description-image { float: right; width: 52px; height: 52px; object-fit: contain; margin: 0 0 10px 12px; border-radius: 4px; }
+.soulforger-essence-description dl { margin: 0 0 12px; }
+.soulforger-essence-description dl > div { display: grid; grid-template-columns: 145px minmax(0, 1fr); gap: 9px; margin-bottom: 5px; }
+.soulforger-essence-description dt { font-weight: bold; }
+.soulforger-essence-description dd { margin: 0; }
+@media (max-width: 480px) {
+  .soulforger-essence-description dl > div { grid-template-columns: 1fr; gap: 0; }
+}
+.soulforger-essence-card button { margin-block: 0.2rem; width: 100%; }
+.soulforger-essence-card small { display: block; margin-block: 0.3rem; }

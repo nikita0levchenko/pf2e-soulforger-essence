@@ -1,0 +1,40 @@
+{
+  "id": "soulforger-essence",
+  "title": "Soulforger: effect automation",
+  "description": "Two PF2e actions: choosing an essence power and applying its drawback. Interface in Russian.",
+  "version": "1.2.1",
+  "authors": [
+    {
+      "name": "daion_anri",
+      "url": "https://github.com/nikita0levchenko",
+      "discord": "daion_anri"
+    }
+  ],
+  "compatibility": {
+    "minimum": "14",
+    "verified": "14"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "pf2e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "8.6.0",
+          "verified": "8.6.1"
+        }
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/main.mjs"
+  ],
+  "styles": [
+    "styles.css"
+  ],
+  "socket": true,
+  "readme": "https://github.com/nikita0levchenko",
+  "manifest": "https://github.com/nikita0levchenko",
+  "download": "https://github.com/nikita0levchenko",
+  "url": "https://github.com/nikita0levchenko"
+}

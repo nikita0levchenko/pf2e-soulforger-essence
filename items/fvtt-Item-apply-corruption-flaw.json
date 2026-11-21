@@ -1,0 +1,46 @@
+{
+  "img": "systems/pf2e/icons/spells/eradicate-undeath.webp",
+  "ownership": {
+    "default": 2
+  },
+  "effects": [],
+  "flags": {
+    "soulforger-essence": {
+      "asset": true,
+      "version": "1.2.1",
+      "action": "corruption"
+    }
+  },
+  "_id": "SEssenceFlaw0001",
+  "name": "Применить изъян порока",
+  "type": "action",
+  "system": {
+    "actionType": {
+      "value": "free"
+    },
+    "actions": {
+      "value": null
+    },
+    "traits": {
+      "value": [
+        "divine"
+      ],
+      "rarity": "common"
+    },
+    "description": {
+      "value": "<p><strong>Свободное действие.</strong> Нажми «Использовать», выбери изъян силы эссенции. Изъян действует без ограничения времени до удаления эффекта. Дневной лимит формы эссенции не расходуется.</p>"
+    },
+    "rules": [],
+    "category": null,
+    "slug": "soulforger-apply-corruption",
+    "selfEffect": {
+      "name": "Выбрать изъян порока",
+      "uuid": "Item.SCorruptGate0001"
+    }
+  },
+  "_stats": {
+    "systemId": "pf2e",
+    "systemVersion": "8.6.1",
+    "coreVersion": "14.369"
+  }
+}

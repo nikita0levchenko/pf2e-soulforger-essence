@@ -1,0 +1,71 @@
+{
+  "img": "systems/pf2e/icons/spells/positive-luminance.webp",
+  "ownership": {
+    "default": 2
+  },
+  "effects": [],
+  "flags": {
+    "soulforger-essence": {
+      "asset": true,
+      "version": "1.2.1",
+      "action": "manifest"
+    }
+  },
+  "_id": "SEssenceFeat0001",
+  "name": "Проявить форму эссенции",
+  "type": "feat",
+  "system": {
+    "actionType": {
+      "value": "free"
+    },
+    "actions": {
+      "value": null
+    },
+    "traits": {
+      "value": [
+        "concentrate",
+        "divine",
+        "extradimensional"
+      ],
+      "rarity": "common"
+    },
+    "description": {
+      "value": "<p><strong>Свободное действие. Частота:</strong> 1 раз в день.</p><p>Нажми «Использовать», выбери силу эссенции, затем подходящий предмет, если это нужно. Эффект действует 1 минуту. Отмена любого окна сохраняет использование.</p><p>Эта способность также предоставляет свободное действие <strong>«Применить изъян порока»</strong>.</p><p>В этой пользовательской версии силу можно выбирать при каждом использовании; действие имеет запрошенную свободную стоимость.</p>"
+    },
+    "rules": [
+      {
+        "key": "GrantItem",
+        "uuid": "Item.SEssenceFlaw0001",
+        "flag": "soulforgerCorruption",
+        "allowDuplicate": false,
+        "nestUnderGranter": false,
+        "onDeleteActions": {
+          "granter": "cascade",
+          "grantee": "detach"
+        }
+      }
+    ],
+    "category": "class",
+    "level": {
+      "value": 2
+    },
+    "slug": "soulforger-manifest-essence",
+    "frequency": {
+      "max": 1,
+      "per": "day"
+    },
+    "prerequisites": {
+      "value": []
+    },
+    "maxTakable": 1,
+    "selfEffect": {
+      "name": "Выбрать силу эссенции",
+      "uuid": "Item.SEssenceGate0001"
+    }
+  },
+  "_stats": {
+    "systemId": "pf2e",
+    "systemVersion": "8.6.1",
+    "coreVersion": "14.369"
+  }
+}
