@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {
   MODULE, IDS, POWERS, DAMAGE_TYPES, eligibleItems, essenceRules, corruptionRules,
-  makeEffect, itemTemplates, stasisEffect, absorbShieldTemp, activateTransaction, escapeHTML
+  makeEffect, itemTemplates, stasisEffect, activateTransaction, escapeHTML
 } from "../scripts/core.mjs";
 
 const power = (id) => POWERS.find((p) => p.id === id);
@@ -94,12 +94,15 @@ test("language suppression uses the localized PF2e modifier slug and a perceptio
   assert.equal(adjustment.slug, "непонятная-речь");
   assert.deepEqual(adjustment.predicate, ["soulforger:target-perceives-essence"]);
 });
-test("shield benefit grants no actor temporary HP and preserves an existing Shield Block", () => {
-  const missing = essenceRules(power("resolute-defiance"), {targetId: "shield", hasShieldBlock: false});
+test("shield benefit targets its HP and hardness and preserves an existing Shield Block", () => {
+  const missing = essenceRules(power("resolute-defiance"), {targetId: "shield", level: 8, hasShieldBlock: false});
   const present = essenceRules(power("resolute-defiance"), {targetId: "shield", hasShieldBlock: true});
   assert(missing.some((r) => r.key === "GrantItem")); assert(!present.some((r) => r.key === "GrantItem"));
   assert(!missing.some((r) => r.key === "TempHP"));
-  assert.equal(missing.find((r) => r.key === "ItemAlteration").itemId, "shield");
+  assert.deepEqual(missing.filter((r) => r.key === "ItemAlteration"), [
+    {key: "ItemAlteration", itemId: "shield", mode: "add", property: "hardness", value: 2},
+    {key: "ItemAlteration", itemId: "shield", mode: "add", property: "hp-max", value: 10}
+  ]);
 });
 test("magical defense is conditional and all-damage weakness is not physical-only", () => {
   const rules = essenceRules(power("magical-resilience"));
@@ -112,12 +115,6 @@ test("stasis duration follows its origin and the critical condition is transient
   assert.equal(normal.system.duration.value, 1); assert.equal(normal.system.duration.unit, "rounds");
   assert.equal(normal.system.start.initiative, 18);
   assert.equal(critical.system.rules[0].inMemoryOnly, true);
-});
-test("shield temporary HP absorb damage first, including damage that exceeds real shield HP", () => {
-  assert.deepEqual(absorbShieldTemp(20, 15, 10), {hp: 20, temp: 5, absorbed: 5});
-  assert.deepEqual(absorbShieldTemp(20, 6, 10), {hp: 16, temp: 0, absorbed: 10});
-  assert.deepEqual(absorbShieldTemp(10, -15, 10), {hp: 0, temp: 0, absorbed: 10});
-  assert.deepEqual(absorbShieldTemp(20, 15, 0), {hp: 15, temp: 0, absorbed: 0});
 });
 test("escaping rejects HTML injection in names and dialog labels", () => {
   assert.equal(escapeHTML('<img src="x" onerror=\'evil()\'>&'), "&lt;img src=&quot;x&quot; onerror=&#39;evil()&#39;&gt;&amp;");

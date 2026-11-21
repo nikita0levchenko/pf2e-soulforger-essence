@@ -27,7 +27,7 @@ export function describePower(power, {corruption = false, level = 1} = {}) {
     extra += `<p><strong>Доступные типы урона:</strong> ${Object.values(DAMAGE_TYPES).map(escapeHTML).join(", ")}.</p>`;
   }
   if (!corruption && power.id === "planar-bond") extra += `<p><strong>Сопротивление на этом уровне:</strong> ${currentLevel + 2}.</p>`;
-  if (!corruption && power.id === "resolute-defiance") extra += `<p><strong>Временные HP щита на этом уровне:</strong> ${currentLevel + 2}.</p>`;
+  if (!corruption && power.id === "resolute-defiance") extra += `<p><strong>Прибавка к текущим и максимальным ОЗ выбранного щита:</strong> ${currentLevel + 2}.</p>`;
   const img = powerIcon(power.id, corruption);
   return {title, img, content: `<article class="soulforger-essence-description">
     <img class="soulforger-essence-description-image" src="${escapeHTML(img)}" alt="">

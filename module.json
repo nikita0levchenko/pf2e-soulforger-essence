@@ -2,7 +2,7 @@
   "id": "soulforger-essence",
   "title": "Soulforger: effect automation",
   "description": "Two PF2e actions: choosing an essence power and applying its drawback. Interface in Russian.",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "authors": [
     {
       "name": "daion_anri",
