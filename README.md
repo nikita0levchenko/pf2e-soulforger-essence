@@ -1,116 +1,116 @@
-# Проявить форму эссенции
+# Manifest Essence Form
 
-Пользовательская способность для Foundry VTT 14 / Pathfinder 2e 8.6.1.
+A custom ability for Foundry VTT 14 / Pathfinder 2e 8.6.1. UI labels in this document are translated from the module's Russian interface.
 
-## Обновление 1.2.1
+## Update 1.2.1
 
-Действие «Проявить форму эссенции» и служебный эффект `(manifest)` используют `systems/pf2e/icons/spells/positive-luminance.webp`. Действие «Применить изъян порока» и служебный эффект `(corruption)` используют `systems/pf2e/icons/spells/eradicate-undeath.webp`.
+The Manifest Essence Form action and its `(manifest)` helper effect use `systems/pf2e/icons/spells/positive-luminance.webp`. The Apply Corruption Flaw action and its `(corruption)` helper effect use `systems/pf2e/icons/spells/eradicate-undeath.webp`.
 
-После замены папки модуля и перезагрузки мира иконки уже добавленных действий и служебных эффектов обновляются автоматически.
+After replacing the module folder and reloading the world, icons on existing actions and helper effects are updated automatically.
 
-## Обновление 1.2.0
+## Update 1.2.0
 
-Выбор эссенции и изъяна снова представлен **выпадающим списком**, как при выборе подкласса. Слева показана иконка текущего варианта, справа от списка расположена отдельная кнопка информации. Сначала выбери вариант в списке, затем нажми кнопку справа для открытия его описания. Открытие описания не подтверждает применение и не расходует использование.
+Essence powers and corruption flaws are once again selected using a **dropdown**, like subclass selection. The currently selected option's icon appears on the left, with a separate information button to the right of the dropdown. Select an option, then click the button on the right to open its description. Opening a description does not confirm activation or expend a use.
 
-Снаряжение выбирается отдельным выпадающим списком. Собственные иконки оружия, доспехов и щитов сохраняются и в раскрытом списке, и в поле после выбора. В том числе сохраняются пользовательские изображения предметов.
+Equipment is selected in a separate dropdown. Weapons, armor, and shields retain their own icons both in the expanded list and in the field after selection. Custom item images are also preserved.
 
-Для каждой из 13 форм эссенции и каждого из 13 изъянов подобраны изображения из стандартного пакета **PF2e**. Таблица путей находится в `ICONS.md`. Иконки ранее добавленных действий и эффектов модуля обновляются автоматически при загрузке мира.
+Images from the standard **PF2e** package have been selected for all 13 essence forms and all 13 corruption flaws. The paths are listed in `ICONS.md`. Icons on the module's existing actions and effects are updated automatically when the world loads.
 
-Для обновления замени папку `soulforger-essence` в `Data/modules` и перезагрузи мир. Повторный импорт JSON или удаление способности с персонажа не требуется.
+To update, replace the `soulforger-essence` folder in `Data/modules` and reload the world. You do not need to reimport the JSON files or remove the ability from the character.
 
-## Обновление 1.1.0
+## Update 1.1.0
 
-В версии 1.1.0 был добавлен просмотр описаний форм эссенции и изъянов в отдельных окнах. Числовые формулы в описании рассчитаны для текущего уровня персонажа. В версии 1.2.0 этот просмотр доступен кнопкой справа от выпадающего списка.
+Version 1.1.0 added descriptions of essence forms and corruption flaws in separate windows. Numerical formulas in the descriptions are calculated for the character's current level. In version 1.2.0, these descriptions are opened using the button to the right of the dropdown.
 
-Для обновления уже установленной версии замени папку модуля `soulforger-essence` новой и перезагрузи мир. Заново добавлять способность на лист или импортировать JSON не требуется.
+To update an existing installation, replace the `soulforger-essence` module folder with the new one and reload the world. You do not need to add the ability to the sheet again or reimport the JSON files.
 
-## Установка
+## Installation
 
-1. Закрой Foundry или останови сервер.
-2. Распакуй папку `soulforger-essence` из архива в пользовательскую папку `Data/modules`. После распаковки должен существовать файл `Data/modules/soulforger-essence/module.json`, без дополнительной вложенной папки.
-3. Запусти Foundry, открой мир PF2e и включи модуль **Soulforger: Проявить форму эссенции** в управлении модулями. Подтверди перезагрузку мира.
-4. Войди мастером. В каталоге предметов автоматически появится папка **Soulforger — форма эссенции**.
-5. Перетащи из неё **Проявить форму эссенции** на лист персонажа. В разделе действий появятся два свободных действия:
-   - **Проявить форму эссенции** — 1 раз в день;
-   - **Применить изъян порока** — без дневного ограничения.
+1. Close Foundry or stop the server.
+2. Extract the `soulforger-essence` folder from the archive into your user data folder's `Data/modules` directory. After extraction, the file must be located at `Data/modules/soulforger-essence/module.json`, without an additional nested folder.
+3. Start Foundry, open a PF2e world, and enable **Soulforger: Manifest Essence Form** in Manage Modules. Confirm the world reload.
+4. Log in as a GM. A folder named **Soulforger — Essence Form** will appear automatically in the Items directory.
+5. Drag **Manifest Essence Form** from that folder onto the character sheet. Two free actions will appear in the Actions section:
+   - **Manifest Essence Form** — once per day;
+   - **Apply Corruption Flaw** — no daily limit.
 
-Два других предмета в папке — служебные эффекты, на которые ссылается `selfEffect`. Их удалять не нужно. Отдельные JSON предметов находятся в `items/` и предназначены для просмотра или повторного импорта при включённом модуле. Для обычной установки импортировать JSON отдельно не требуется.
+The other two items in the folder are helper effects referenced by `selfEffect`. Keep these items. Individual item JSON files are available in `items/` for inspection or reimport while the module is enabled. A normal installation does not require importing the JSON files separately.
 
-## Использование
+## Usage
 
-Нажми штатную кнопку **Использовать** возле действия. При проявлении сначала выбирается одна из 13 сил. Если эффект относится к определённому снаряжению, следующим окном предлагается подходящий предмет из инвентаря:
+Click the standard **Use** button next to the action. When manifesting, first select one of the 13 powers. If the effect applies to specific equipment, the next window offers eligible items from the inventory:
 
-| Сила | Фильтр предметов | Дополнительный выбор |
+| Power | Eligible Items | Additional Selection |
 | --- | --- | --- |
-| Adaptable Persona | Доспехи | Карабканье / плавание; с 8-го уровня также полёт |
-| Bounding Spirit | Только оружие ближнего боя | — |
-| Deep-Seated Fear | Не требуется | Цель Demoralize выбирается обычным способом |
-| Determined Toughness | Не требуется | — |
-| Harmful Malice | Не требуется: усиливает все Strikes | — |
-| Heroic Heart | Не требуется | — |
-| Healing Grace | Не требуется | — |
-| Magical Resilience | Доспехи и щиты | — |
-| Planar Bond | Доспехи и щиты | Один из восьми типов урона |
-| Planar Pain | Оружие | Один из восьми типов урона |
-| Pull of Stasis | Оружие | — |
-| Reflecting Spirit | Доспехи и щиты | При отражении — щит для расчёта и тип снаряда |
-| Resolute Defiance | Только щиты | — |
+| Adaptable Persona | Armor | Climb / swim; flight is also available from level 8 |
+| Bounding Spirit | Melee weapons only | — |
+| Deep-Seated Fear | No item required | Select the Demoralize target as usual |
+| Determined Toughness | No item required | — |
+| Harmful Malice | No item required: enhances all Strikes | — |
+| Heroic Heart | No item required | — |
+| Healing Grace | No item required | — |
+| Magical Resilience | Armor and shields | — |
+| Planar Bond | Armor and shields | One of eight damage types |
+| Planar Pain | Weapons | One of eight damage types |
+| Pull of Stasis | Weapons | — |
+| Reflecting Spirit | Armor and shields | When reflecting: a shield for the calculation and the projectile type |
+| Resolute Defiance | Shields only | — |
 
-Все окна можно отменить без расходования использования. Повторное нажатие, пока выбор открыт, не создаёт вторую активацию. Подтверждённый эффект появляется в списке эффектов персонажа и действует 1 минуту игрового времени. В карточке чата есть кнопка досрочного завершения. Вне боя для истечения минуты должно продвигаться игровое время Foundry.
+You can cancel any window without expending a use. Clicking again while a selection window is open does not create a second activation. Once confirmed, the effect appears in the character's effects list and lasts for 1 minute of game time. The chat card includes a button to end it early. Outside combat, Foundry's game time must advance for the minute to elapse.
 
-Дневное использование хранится в штатном `system.frequency`: его восстанавливает обычная ежедневная подготовка/отдых PF2e. Для повторной проверки способности мастер может вручную восстановить счётчик в листе.
+The daily use is stored in the native `system.frequency` field and is restored by PF2e's normal daily preparation/rest process. To test the ability again, the GM can manually restore the counter on the sheet.
 
-**Применить изъян порока** открывает список изъянов. Изъян добавляется отдельным эффектом без ограничения длительности. Повторный выбор уже действующего изъяна не создаёт дубликат. Эффект удаляется обычным способом или кнопкой в чате. Разные изъяны могут существовать одновременно; действие не навязывает стадии проклятия.
+**Apply Corruption Flaw** opens the list of flaws. The selected flaw is added as a separate effect with unlimited duration. Selecting a flaw that is already active does not create a duplicate. Remove the effect normally or use the button in chat. Multiple different flaws can coexist; the action does not enforce curse stages.
 
-## Как реализованы эффекты
+## Effect Implementation
 
-- Числовые бонусы, штрафы, сопротивления, слабости, скорости, дополнительные кости и изменение типа урона используют штатные Rule Elements PF2e. Привязка оружейных эффектов идёт по ID конкретного предмета, поэтому одинаковые названия предметов не смешиваются.
-- Harmful Malice усиливает все Strikes. Planar Pain и Pull of Stasis относятся только к выбранному оружию. Planar Pain меняет физические компоненты урона, сохраняя дополнительные компоненты других типов.
-- Healing Grace использует штатный FastHealing: PF2e создаёт карточку исцеления в начале хода. Само получение HP выполняется обычными кнопками применения исцеления PF2e.
-- Harm, Heal и Dispel Magic добавляются как временные сакральные врождённые заклинания с одним использованием. Характеристика — Харизма; обучение и КС рассчитывает система. Заклинания находятся в разделе **Заклинания** и удаляются вместе с породившей их эссенцией. Обычная стоимость сотворения заклинания сохраняется.
-- Deep-Seated Fear даёт +2 ко всему Запугиванию. В окне проверки есть переключатель **Цель воспринимает форму эссенции**, управляющий снятием языкового штрафа. В карточке проявления есть однократная кнопка Demoralize. Дальность, возможность воспринимать эффект и временный иммунитет Demoralize проверяются по обычным правилам игры.
-- Determined Toughness ослабляет шесть статусных штрафов через AdjustModifier. Значения состояний, потеря HP от drained и DC срыва заклинаний от stupefied сохраняются.
-- Pull of Stasis автоматически обрабатывает Удар по отмеченной цели, если PF2e определила степень успеха. Для изменения чужой цели запрос обрабатывает подключённый мастер. На критическом попадании immobilized привязан к временному эффекту и прекращается вместе с ним. Без отмеченной цели/определённого результата автоматическое применение невозможно.
-- Reflecting Spirit предоставляет условную защиту автоматически. После соответствующего промаха игрок нажимает кнопку реакции в карточке эффекта. Она создаёт обычный бросок урона PF2e; урон атакующему применяют стандартной кнопкой. Расход реакции и наличие триггера контролируются игроком/мастером. Вариант доспеха без щита не получает придуманной формулы: модуль сообщает, что значение должен определить мастер.
-- Resolute Defiance меняет Твёрдость выбранного щита и при необходимости временно предоставляет Shield Block. Временные HP хранятся **на щите**, не у персонажа. При обычном применении Shield Block они поглощают урон щиту до потери его настоящих HP; бонус не меняет максимум HP и порог поломки. Нативная отмена применения урона восстанавливает соответствующую часть временных HP.
+- Numerical bonuses, penalties, resistances, weaknesses, Speeds, additional dice, and damage type changes use native PF2e Rule Elements. Weapon effects are bound to the specific item's ID, so items with identical names are not confused with one another.
+- Harmful Malice enhances all Strikes. Planar Pain and Pull of Stasis apply only to the selected weapon. Planar Pain changes physical damage components while preserving additional components of other damage types.
+- Healing Grace uses native FastHealing: PF2e creates a healing card at the start of the turn. HP are restored using PF2e's standard healing application buttons.
+- Harm, Heal, and Dispel Magic are added as temporary divine innate spells with one use. They use Charisma; the system calculates proficiency and DCs. The spells appear in the **Spells** section and are removed along with the essence that granted them. Their normal spellcasting action costs still apply.
+- Deep-Seated Fear grants +2 to all Intimidation checks. The check dialog includes a **Target perceives the essence form** toggle that controls removal of the language penalty. The manifestation card includes a one-use Demoralize button. Range, the ability to perceive the effect, and temporary immunity to Demoralize are checked under the normal game rules.
+- Determined Toughness reduces six status penalties through AdjustModifier. Condition values, HP loss from drained, and the spell-disruption DC from stupefied remain unchanged.
+- Pull of Stasis automatically processes a Strike against a targeted creature if PF2e has determined the degree of success. A connected GM handles requests to modify another actor. On a critical hit, immobilized is tied to the temporary effect and ends when that effect ends. Automatic application requires a targeted creature and a determined result.
+- Reflecting Spirit provides its conditional defense automatically. After a qualifying miss, the player clicks the reaction button on the effect's chat card. This creates a normal PF2e damage roll; damage to the attacker is applied with the standard button. The player/GM tracks the reaction cost and checks the trigger. For the armor option without a shield, the module does not invent a formula: it reports that the GM must determine the value.
+- Resolute Defiance changes the selected shield's Hardness and temporarily grants Shield Block if needed. Temporary HP are stored **on the shield**, not on the character. During normal Shield Block damage application, they absorb damage to the shield before its actual HP are lost; the bonus does not change maximum HP or the Broken Threshold. The native damage undo restores the corresponding temporary HP.
 
-## Срабатывания изъянов
+## Corruption Flaw Triggers
 
-| Изъян | Обработка |
+| Flaw | Handling |
 | --- | --- |
-| Adaptable Persona / Pull of Stasis | Постоянный штраф ко всем Скоростям |
-| Bounding Spirit | После промаха дистанционным/метательным оружием повторный Strike по ближайшему к исходной цели союзнику на сцене; прежний MAP, без второй траты боеприпаса и без цепочки повторных перебросов |
-| Deep-Seated Fear | Дополнительная попытка Demoralize по ближайшему союзнику на сцене, без рекурсивной цепочки |
-| Determined Toughness | Текущие перечисленные состояния увеличиваются на 1 при применении изъяна. Новые состояния и повышение их значения также усиливаются на 1. Обычное уменьшение состояния не запускает повторное усиление |
-| Harmful Malice | Уменьшение наносимого урона на половину уровня с округлением вниз |
-| Heroic Heart | Статусный штраф −1 к атакам |
-| Healing Grace | Уменьшение любого получаемого исцеления и исцеления, предоставляемого заклинаниями, на половину уровня с округлением вниз |
-| Magical Resilience | Условный статусный штраф −1 к КБ и спасброскам против заклинаний |
-| Planar Bond | Слабость 1 ко всему урону |
-| Planar Pain | После фактического применения урона оружия/безоружной атаки к цели — 2 урона последнего выбранного типа персонажу; природная невосприимчивость к vitality/void не отменяет этот урон. Сопротивления/слабости учитывает PF2e |
-| Reflecting Spirit | Условная слабость 5 к физическим дистанционным атакам |
-| Resolute Defiance | Проверка DC 5 после урона с поднятым щитом/блокирования. При провале связанный текущей эссенцией щит убирается, другой щит падает |
+| Adaptable Persona / Pull of Stasis | Persistent penalty to all Speeds |
+| Bounding Spirit | After a missed ranged/thrown weapon attack, repeat the Strike against the ally on the scene nearest to the original target; use the previous MAP, with no second ammunition expenditure and no chain of repeated rerolls |
+| Deep-Seated Fear | An additional Demoralize attempt against the nearest ally on the scene, without a recursive chain |
+| Determined Toughness | Existing listed conditions increase by 1 when the flaw is applied. New conditions and increases to their values are also increased by 1. Normal decreases to a condition do not trigger another increase |
+| Harmful Malice | Damage dealt is reduced by half the character's level, rounded down |
+| Heroic Heart | A −1 status penalty to attack rolls |
+| Healing Grace | All healing received and healing provided by spells is reduced by half the character's level, rounded down |
+| Magical Resilience | A conditional −1 status penalty to AC and saving throws against spells |
+| Planar Bond | Weakness 1 to all damage |
+| Planar Pain | After weapon/unarmed attack damage is actually applied to a target, the character takes 2 damage of the last selected type; innate immunity to vitality/void does not prevent this damage. PF2e handles resistances and weaknesses |
+| Reflecting Spirit | A conditional weakness 5 to physical ranged attacks |
+| Resolute Defiance | A DC 5 check after taking damage with a raised shield / blocking. On a failure, the shield bound to the current essence is dismissed; any other shield is dropped |
 
-Для изъяна Planar Pain запоминается последний тип, выбранный этой способностью. Если истории ещё нет, его можно указать отдельным окном. Его изменение при последующем проявлении обновляет и действующий изъян.
+For the Planar Pain flaw, the ability remembers the last damage type selected. If no previous selection exists, you can specify it in a separate window. Changing it during a later manifestation also updates the active flaw.
 
-При удалении изъяна Determined Toughness уже увеличенные значения состояний не уменьшаются автоматически: состояние проходит или изменяется по обычным правилам. Это позволяет не терять изменения состояний, которые произошли после появления изъяна.
+Removing the Determined Toughness flaw does not automatically reduce condition values that have already been increased: those conditions end or change under the normal rules. This preserves changes to conditions that occurred after the flaw was applied.
 
-Для автоматического выбора ближайшего союзника нужны токены на активной сцене и настроенная принадлежность сторон. Если союзник находится вне сцены, цель определяет мастер. Автоматические эффекты не управляют вручную введённым уроном или бросками произвольных сторонних макросов. При работе с чужими актёрами мастеру нужно оставаться подключённым.
+Automatically selecting the nearest ally requires tokens on the active scene with their alliances configured. If the ally is outside the scene, the GM determines the target. Automated effects do not control manually entered damage or rolls made by arbitrary third-party macros. The GM must remain connected when working with other actors.
 
-Применение эссенции не переодевает персонажа и не удаляет предметы инвентаря: по запросу создаётся усиление выбранного предмета. Обычное проявление/хранение вооружения Soulforger, требования к свободным рукам и стадии Soulforged Corruption не входят в эти два действия.
+Applying an essence does not change the character's equipped items or remove inventory items: it creates an enhancement for the selected item as requested. Normal manifestation/storage of Soulforger armaments, free-hand requirements, and Soulforged Corruption stages are outside the scope of these two actions.
 
-## Отличия от книжного архетипа
+## Differences from the Published Archetype
 
-По запросу пользователя проявление здесь является **свободным действием**, позволяет заново выбирать силу при каждом использовании и имеет **один общий дневной лимит**. Эти настройки намеренно отличаются от стандартного Manifest Soulforged Armament / Soul Arsenal.
+As requested by the user, manifestation here is a **free action**, allows a new power to be selected each time, and has **one shared daily limit**. These settings intentionally differ from the standard Manifest Soulforged Armament / Soul Arsenal rules.
 
-## Проверки и исходные версии
+## Validation and Source Versions
 
-Образец: экспорт Bespell Strikes из Foundry 14.369, PF2e 8.6.1. Механизм `selfEffect`, выдача второго действия через GrantItem и нативные Rule Elements сверены с открытым исходным кодом PF2e. Дополнительные срабатывания реализованы кодом модуля. Для нестандартных листов модулей также доступно API `game.modules.get("soulforger-essence").api.use(actor, item)`.
+Reference item: a Bespell Strikes export from Foundry 14.369, PF2e 8.6.1. The `selfEffect` mechanism, granting the second action through GrantItem, and native Rule Elements were checked against PF2e's open-source code. Additional triggers are implemented in the module's code. For custom sheets provided by other modules, the API `game.modules.get("soulforger-essence").api.use(actor, item)` is also available.
 
-Выполнены локальные проверки синтаксиса JavaScript и автоматические тесты построения эффектов, фильтрации предметов, отмены выбора, дневного счётчика, отката при ошибке, всех 26 вариантов эффектов и защиты от двойного нажатия. Тесты последовательностей используют подменённые API Foundry. Запуск внутри живого клиента Foundry не выполнялся; взаимодействие с модулями конкретного мира требует проверки в этом мире.
+Local JavaScript syntax checks and automated tests cover effect construction, item filtering, selection cancellation, the daily use counter, rollback on error, all 26 effect variants, and protection against double-click activation. Workflow tests use mocked Foundry APIs. The module has not been run inside a live Foundry client; interaction with the modules used in a particular world requires testing in that world.
 
-В версии 1.2.0 проверены выпадающие списки с изображениями, все 26 описаний, смена выбранного варианта, отсутствие расхода использования при просмотре, управление с клавиатуры, закрытие списка, повторная привязка обработчиков и обновление иконок существующих эффектов. DOM-проверки используют LinkeDOM, остальные проверки — подменённые API Foundry. Всего проходит 92 локальных теста.
+Version 1.2.0 checks cover image dropdowns, all 26 descriptions, changing the selected option, previewing descriptions without expending a use, keyboard controls, closing the dropdown, rebinding event handlers, and updating icons on existing effects. DOM checks use LinkeDOM; the remaining checks use mocked Foundry APIs. All 92 local tests pass.
 
-Для локальных тестов установи зависимости разработки: `npm install --ignore-scripts`, затем выполни `npm test`. Эти зависимости не нужны для работы модуля в Foundry.
+To run the local tests, install the development dependencies with `npm install --ignore-scripts`, then run `npm test`. These dependencies are not required to use the module in Foundry.
 
-Правила: https://2e.aonprd.com/Archetypes.aspx?ID=393 и https://2e.aonprd.com/Rules.aspx?ID=3689. Исходный код системы: https://github.com/foundryvtt/pf2e. Описания механики относятся к Pathfinder и Paizo; программная реализация модуля — отдельный пользовательский код.
+Rules: https://2e.aonprd.com/Archetypes.aspx?ID=393 and https://2e.aonprd.com/Rules.aspx?ID=3689. System source code: https://github.com/foundryvtt/pf2e. The game mechanics described belong to Pathfinder and Paizo; the module is a separate custom software implementation, implemented by daion_anri.
