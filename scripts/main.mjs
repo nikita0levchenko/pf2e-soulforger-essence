@@ -1,7 +1,7 @@
 import {
   MODULE, VERSION, IDS, POWERS, SPELLS, CONDITIONS, DAMAGE_TYPES, ICON,
   escapeHTML, powerLabel, powerById, actorLevel, eligibleItems, isShield,
-  makeEffect, itemTemplates, stasisEffect, absorbShieldTemp, activateTransaction
+  makeEffect, itemTemplates, stasisEffect, activateTransaction
 } from "./core.mjs";
 import {powerChoices, renderChoiceContent, bindChoiceDescriptions} from "./choice-ui.mjs";
 import {ESSENCE_ICON, CORRUPTION_ICON, STASIS_ICON, IMMOBILIZED_ICON, DEFAULT_ITEM_ICONS, powerIcon} from "./icons.mjs";
@@ -10,7 +10,6 @@ const busy = new Set();
 const installedRoots = new WeakSet();
 const secondaryDemoralize = new Set();
 const nativeReservations = new Map();
-const shieldAdjustments = new Map();
 const shieldDamageContexts = new Map();
 const shieldDamageQueue = new Map();
 const stasisRequests = new Set();
@@ -122,10 +121,36 @@ async function addInnate(actor, effect, power, level) {
   await actor.createEmbeddedDocuments("Item", [spell]);
 }
 
-async function cleanup(actor, effectId) {
+const rawShieldHP = (shield) => Number(shield._source?.system?.hp?.value ?? shield.system.hp.value);
+
+/** The effect owns max HP; current HP must also exist in the shield's persisted source for native Shield Block. */
+export async function grantShieldHP(shield, effect, {max = flag(effect).config.level + 2, value = max} = {}) {
+  if (shield.getFlag(MODULE, "shieldHP")?.source === effect.id) return;
+  await shield.update({
+    "system.hp.value": rawShieldHP(shield) + value,
+    [`flags.${MODULE}.shieldHP`]: {source: effect.id, max, value},
+    [`flags.${MODULE}.-=tempHP`]: null
+  }, {soulforger: true, checkHP: false});
+}
+
+async function removeShieldHP(shield) {
+  const bonus = shield.getFlag(MODULE, "shieldHP");
+  if (!bonus) return;
+  const effect = shield.actor.items.get(bonus.source);
+  const maxRuleStillActive = effectActive(effect ?? {}) && effect.system.rules.some((r) =>
+    r.key === "ItemAlteration" && r.property === "hp-max" && r.itemId === shield.id);
+  const max = Math.max(0, shield.system.hp.max - (maxRuleStillActive ? bonus.max : 0));
+  await shield.update({
+    "system.hp.value": Math.max(0, Math.min(max, rawShieldHP(shield) - bonus.value)),
+    [`flags.${MODULE}.-=shieldHP`]: null
+  }, {soulforger: true, checkHP: false});
+}
+
+export async function cleanup(actor, effectId) {
   const children = itemsOf(actor).filter((i) => flag(i).effectId === effectId).map((i) => i.id);
   if (children.length) await actor.deleteEmbeddedDocuments("Item", children);
   for (const shield of itemsOf(actor).filter(isShield)) {
+    if (shield.getFlag(MODULE, "shieldHP")?.source === effectId) await removeShieldHP(shield);
     if (shield.getFlag(MODULE, "tempHP")?.source === effectId) await shield.unsetFlag(MODULE, "tempHP");
   }
 }
@@ -141,7 +166,7 @@ async function applySelection(actor, {power, config}, corruption) {
       if (power.id === "resolute-defiance") {
         const shield = actor.items.get(config.targetId);
         if (!shield) throw Error("Выбранный щит больше недоступен.");
-        await shield.setFlag(MODULE, "tempHP", {source: effect.id, value: config.level + 2, max: config.level + 2});
+        await grantShieldHP(shield, effect);
       }
     }
     return {effect, actor};
@@ -194,13 +219,13 @@ async function reportEffect(actor, effect) {
   const buttons = [cardButton("dismiss", data.kind === "corruption" ? "Убрать изъян" : "Завершить форму эссенции", {effect: effect.uuid})];
   if (data.kind === "essence" && power.id === "deep-seated-fear") buttons.push(cardButton("demoralize", "Деморализовать при проявлении", {effect: effect.uuid}));
   if (data.kind === "essence" && power.id === "reflecting-spirit") buttons.push(cardButton("reflect", "Реакция: отразить промахнувшийся снаряд", {effect: effect.uuid}));
-  if (data.kind === "corruption" && power.id === "resolute-defiance") buttons.push(cardButton("shield-check", "Проверка изъяна щита — DC 5", {effect: effect.uuid}));
+  if (data.kind === "corruption" && power.id === "resolute-defiance") buttons.push(cardButton("shield-check", "Проверка изъяна щита — КС 5", {effect: effect.uuid}));
   let text = `<p><strong>${escapeHTML(effect.name)}</strong></p>${effect.system.description.value}`;
   if (data.kind === "essence") text += "<p><small>Длительность: 1 минута. Эффект можно завершить кнопкой ниже.</small></p>";
   if (data.kind === "essence" && SPELLS[power.id] && actorLevel(actor) >= (SPELLS[power.id].minLevel ?? 1)) {
     text += "<p>Временное врождённое заклинание с одним использованием добавлено в раздел «Заклинания».</p>";
   }
-  if (data.kind === "essence" && power.id === "resolute-defiance") text += `<p>Временные HP щита: ${actorLevel(actor) + 2}. HP персонажа не изменены.</p>`;
+  if (data.kind === "essence" && power.id === "resolute-defiance") text += `<p>Текущие и максимальные ОЗ выбранного щита увеличены на ${data.config.level + 2} на время эссенции.</p>`;
   await card(actor, text, buttons);
 }
 
@@ -264,6 +289,35 @@ export async function migrateActorIcons(actor) {
 async function migrateIcons() {
   for (const actor of allActors().filter(updater)) await migrateActorIcons(actor);
 }
+
+export async function migrateShieldHP(actor) {
+  for (const effect of effectsOf(actor, "essence", "resolute-defiance")) {
+    const config = flag(effect).config;
+    const shield = actor.items.get(config?.targetId);
+    if (!shield || !isShield(shield)) continue;
+    const legacy = shield.getFlag(MODULE, "tempHP");
+    const max = legacy?.source === effect.id ? legacy.max : config.level + 2;
+    const rules = effect.system.rules;
+    if (!rules.some((r) => r.key === "ItemAlteration" && r.property === "hp-max" && r.itemId === shield.id)) {
+      await effect.update({"system.rules": [...rules,
+        {key: "ItemAlteration", itemId: shield.id, mode: "add", property: "hp-max", value: max}],
+        "system.description.value": makeEffect(powerById("resolute-defiance"), config).system.description.value});
+    }
+    await grantShieldHP(shield, effect, {max, value: legacy?.source === effect.id ? legacy.value : max});
+  }
+  for (const effect of effectsOf(actor, "corruption", "resolute-defiance")) {
+    const power = powerById("resolute-defiance");
+    const description = makeEffect(power, flag(effect).config, {corruption: true}).system.description.value;
+    if (effect.system.description.value !== description) await effect.update({"system.description.value": description,
+      "system.rules": effect.system.rules.map((r) => r.key === "Note" && r.selector === "damage-received"
+        ? {...r, text: escapeHTML(power.flaw)} : r)});
+  }
+}
+
+async function migrateShields() {
+  for (const actor of allActors().filter(updater)) await migrateShieldHP(actor);
+}
+
 async function sweep() {
   if (sweeping) return;
   sweeping = true;
@@ -279,6 +333,8 @@ async function sweep() {
       const orphanIds = itemsOf(actor).filter((i) => flag(i).effectId && !actor.items.has(flag(i).effectId)).map((i) => i.id);
       if (orphanIds.length) await actor.deleteEmbeddedDocuments("Item", orphanIds);
       for (const shield of itemsOf(actor).filter(isShield)) {
+        const bonus = shield.getFlag(MODULE, "shieldHP");
+        if (bonus && !effectActive(actor.items.get(bonus.source) ?? {})) await removeShieldHP(shield);
         const temp = shield.getFlag(MODULE, "tempHP");
         if (temp && !actor.items.has(temp.source)) await shield.unsetFlag(MODULE, "tempHP");
       }
@@ -315,50 +371,51 @@ export function preUpdateItem(item, changes, options) {
   }
   if (!isShield(item)) return;
   const next = changes["system.hp.value"] ?? fu().getProperty(changes, "system.hp.value");
-  const temp = item.getFlag(MODULE, "tempHP");
-  const effect = temp && actor.items.get(temp.source);
-  const current = Number(item._source.system.hp.value);
-  if (typeof next !== "number" || next >= current || !temp || !effectActive(effect ?? {}) || !temp.value) return;
-  const capture = shieldDamageContexts.get(actor.uuid);
-  const uncappedNext = capture?.shieldId === item.id && typeof capture.fullDamage === "number"
-    ? current - capture.fullDamage : next;
-  const result = absorbShieldTemp(current, uncappedNext, temp.value);
-  if ("system.hp.value" in changes) changes["system.hp.value"] = result.hp;
-  else fu().setProperty(changes, "system.hp.value", result.hp);
-  fu().setProperty(changes, `flags.${MODULE}.tempHP`, {...temp, value: result.temp});
-  shieldAdjustments.set(actor.uuid, {shieldId: item.id, source: temp.source, absorbed: result.absorbed,
-    actualDamage: current - result.hp, at: Date.now()});
+  const bonus = item.getFlag(MODULE, "shieldHP");
+  const effect = bonus && actor.items.get(bonus.source);
+  const current = rawShieldHP(item);
+  if (typeof next !== "number" || next >= current || !bonus || !effectActive(effect ?? {}) || !bonus.value) return;
+  const absorbed = Math.min(bonus.value, current - Math.max(0, next));
+  fu().setProperty(changes, `flags.${MODULE}.shieldHP`, {...bonus, value: bonus.value - absorbed});
+  const context = shieldDamageContexts.get(actor.uuid);
+  if (context?.shieldId === item.id) context.adjustment = {shieldId: item.id, source: bonus.source, absorbed, realHP: true};
 }
 
-/** Capture PF2e's own post-IWR delta before shield HP are capped. No document sources are edited. */
+function currentShield(actor) {
+  const id = actor.system?.attributes?.shield?.itemId;
+  if (id) {
+    const item = actor.items.get(id);
+    return item && isShield(item) ? item : null;
+  }
+  return actor.heldShield ?? itemsOf(actor).find((i) => isShield(i) && i.isEquipped) ?? null;
+}
+
+/** Resolve the flaw before PF2e calculates hardness or updates either HP pool. */
 export function installDamageCapture(ActorClass) {
   const proto = ActorClass?.prototype;
-  if (!proto?.applyDamage || !proto.calculateHealthDelta || proto[`${MODULE}-capture`]) return false;
+  if (!proto?.applyDamage || proto[`${MODULE}-capture`]) return false;
   Object.defineProperty(proto, `${MODULE}-capture`, {value: true});
-  const calculate = proto.calculateHealthDelta;
-  proto.calculateHealthDelta = function (args) {
-    const capture = shieldDamageContexts.get(this.uuid);
-    if (capture && args.delta > 0) {
-      let hardness = Math.max(0, Number(this.hardness) || 0);
-      const damage = capture.args.damage, weapon = capture.args.item;
-      if (damage?.materials?.has?.("adamantine")) {
-        const grade = weapon?.type === "weapon" && weapon.system.material?.type === "adamantine"
-          ? weapon.system.material.grade ?? "standard" : "standard";
-        if (({low: 0, standard: 10, high: 13}[grade] ?? 0) >= hardness) hardness = Math.floor(hardness / 2);
-      }
-      capture.fullDamage = args.delta + (capture.args.final ? 0 : hardness);
-    }
-    return calculate.call(this, args);
-  };
   const apply = proto.applyDamage;
   proto.applyDamage = async function (args) {
-    const shield = this.heldShield;
-    const temp = shield?.getFlag(MODULE, "tempHP");
-    if (!args.shieldBlockRequest || args.final || !temp?.value || !this.system.attributes?.shield?.raised) return apply.call(this, args);
+    const tokenActor = args.token?.actor;
+    const actor = tokenActor && tokenActor.uuid === this.uuid ? tokenActor : this;
+    if (!effectsOf(actor, "corruption", "resolute-defiance").length && !currentShield(actor)?.getFlag(MODULE, "shieldHP"))
+      return apply.call(this, args);
     const previous = shieldDamageQueue.get(this.uuid) ?? Promise.resolve();
     const task = previous.catch(() => {}).then(async () => {
-      shieldDamageContexts.set(this.uuid, {shieldId: shield.id, args, fullDamage: null});
-      try {return await apply.call(this, args);} finally {shieldDamageContexts.delete(this.uuid);}
+      const shield = currentShield(actor), data = actor.system?.attributes?.shield;
+      const canBlock = shield && data?.raised && !data.broken && !data.destroyed &&
+        (!shield.system.equipped || shield.system.equipped.carryType === "held");
+      let checked = false, request = args;
+      if (args.shieldBlockRequest && !args.final && Number(args.damage?.total ?? args.damage) > 0 &&
+          effectsOf(actor, "corruption", "resolute-defiance").length) {
+        if (canBlock) {
+          checked = true;
+          if (!await shieldCheck(actor, shield)) request = {...args, shieldBlockRequest: false};
+        } else request = {...args, shieldBlockRequest: false};
+      }
+      shieldDamageContexts.set(this.uuid, {shieldId: shield?.id, checked});
+      try {return await apply.call(this, request);} finally {shieldDamageContexts.delete(this.uuid);}
     });
     shieldDamageQueue.set(this.uuid, task);
     try {return await task;} finally {if (shieldDamageQueue.get(this.uuid) === task) shieldDamageQueue.delete(this.uuid);}
@@ -418,17 +475,23 @@ async function pain(actor, type) {
   await context.applyDamage({damage: roll, token, item: flaw});
   await card(actor, `<p>Изъян Планарной боли: базовые <strong>2 ${escapeHTML(DAMAGE_TYPES[type])}</strong>. Совместимость типа с живым/неживым существом обойдена; сопротивления и слабости обрабатывает PF2e.</p>`);
 }
-async function shieldCheck(actor) {
-  const shieldData = actor.system.attributes?.shield;
-  const shield = actor.items.get(shieldData?.itemId) ?? itemsOf(actor).find((i) => isShield(i) && i.isEquipped);
-  if (!shield) return;
-  const roll = await new Roll("1d20").evaluate();
-  await roll.toMessage({speaker: ChatMessage.getSpeaker({actor}), flavor: "Изъян Решительного неповиновения — простая проверка DC 5"});
-  if (roll.total >= 5) return;
-  const bound = effectsOf(actor, "essence").filter((e) => flag(e).config?.targetId === shield.id);
-  for (const effect of bound) {await cleanup(actor, effect.id); await effect.delete();}
-  await shield.update({"system.equipped.carryType": bound.length ? "stowed" : "dropped", "system.equipped.handsHeld": 0});
-  await card(actor, `<p>Проверка провалена: ${escapeHTML(shield.name)} ${bound.length ? "убран как связанный предмет" : "выпал из рук"}.</p>`);
+export async function shieldCheck(actor, shield = currentShield(actor)) {
+  if (!shield) return true;
+  const label = "Изъян Решительного неповиновения — чистая проверка КС 5";
+  const roll = await game.pf2e.Check.roll(new game.pf2e.CheckModifier(label, {modifiers: []}), {
+    actor, item: effectsOf(actor, "corruption", "resolute-defiance")[0] ?? null,
+    type: "flat-check", dc: {value: 5}, skipDialog: true
+  });
+  if (!roll) throw Error("Проверка изъяна щита отменена. Урон ещё не применён.");
+  if (roll.total >= 5) return true;
+  const raisedEffects = itemsOf(actor).filter((i) => i.type === "effect" &&
+    (["effect-raise-a-shield", "raise-a-shield"].includes(i.slug ?? i.system.slug) ||
+      i.system.rules?.some((r) => r.key === "ActiveEffectLike" && r.path === "system.attributes.shield.raised" && r.value === true) ||
+      ((i.slug ?? i.system.slug) === "effect-cover" && i.system.traits?.otherTags?.includes("tower-shield"))));
+  if (raisedEffects.length) await actor.deleteEmbeddedDocuments("Item", raisedEffects.map((i) => i.id));
+  await shield.update({"system.equipped.carryType": "dropped", "system.equipped.handsHeld": 0});
+  await card(actor, `<p>Проверка провалена: ${escapeHTML(shield.name)} выпал из рук. Щит больше не поднят; блок не снижает урон.</p>`);
+  return false;
 }
 
 async function applyStasis(message) {
@@ -454,7 +517,7 @@ async function applyStasisInner(message) {
   await target.actor.createEmbeddedDocuments("Item", [source]);
 }
 
-async function onChat(message, _options, userId) {
+export async function onChat(message, _options, userId) {
   if (userId !== game.user.id || flag(message).ownMessage) return;
   const actor = message.actor, context = contextOf(message);
   if (!actor) return;
@@ -483,8 +546,8 @@ async function onChat(message, _options, userId) {
     const applied = message.flags.pf2e.appliedDamage;
     const dealt = !applied?.isHealing && ((applied?.updates ?? []).some((u) => u.value > 0) || (applied?.shield?.damage ?? 0) > 0);
     if (dealt) await applyPainForMessage(message);
-    if (!applied?.isHealing && actor.isOwner && effectsOf(actor, "corruption", "resolute-defiance").length &&
-      (applied?.shield || (dealt && actor.system.attributes?.shield?.raised))) await shieldCheck(actor);
+    if (!flag(message).shieldCheckHandled && dealt && actor.isOwner &&
+      effectsOf(actor, "corruption", "resolute-defiance").length && actor.system.attributes?.shield?.raised) await shieldCheck(actor);
   }
 }
 
@@ -550,17 +613,13 @@ async function clickCard(event) {
 }
 
 export function preCreateChat(message) {
-  const context = contextOf(message);
-  if (context.type !== "damage-taken") return;
-  const actor = message.actor;
-  const adjust = actor && shieldAdjustments.get(actor.uuid);
+  if (contextOf(message).type !== "damage-taken") return;
+  const context = shieldDamageContexts.get(message.actor?.uuid);
+  if (!context) return;
+  if (context.checked) message.updateSource({[`flags.${MODULE}.shieldCheckHandled`]: true});
+  const adjust = context.adjustment;
   const applied = message.flags.pf2e?.appliedDamage;
-  if (!adjust || Date.now() - adjust.at > 5000 || applied?.shield?.id !== adjust.shieldId) return;
-  message.updateSource({
-    "flags.pf2e.appliedDamage.shield.damage": adjust.actualDamage,
-    [`flags.${MODULE}.shieldUndo`]: adjust
-  });
-  shieldAdjustments.delete(actor.uuid);
+  if (adjust && applied?.shield?.id === adjust.shieldId) message.updateSource({[`flags.${MODULE}.shieldUndo`]: adjust});
 }
 export async function onUpdateChat(message, changes, _options, userId) {
   if (userId !== game.user.id) return;
@@ -568,9 +627,13 @@ export async function onUpdateChat(message, changes, _options, userId) {
   const adjustment = flag(message).shieldUndo;
   if (!reverted || !adjustment) return;
   const actor = message.actor, shield = actor?.items.get(adjustment.shieldId);
-  const temp = shield?.getFlag(MODULE, "tempHP");
-  if (temp?.source === adjustment.source && actor.isOwner) await shield.setFlag(MODULE, "tempHP",
-    {...temp, value: Math.min(temp.max, temp.value + adjustment.absorbed)});
+  const bonus = shield?.getFlag(MODULE, "shieldHP");
+  if (bonus?.source === adjustment.source && actor.isOwner) {
+    const update = {[`flags.${MODULE}.shieldHP`]: {...bonus, value: Math.min(bonus.max, bonus.value + adjustment.absorbed)}};
+    // Older messages undid only real HP, excluding the previous invisible pool.
+    if (!adjustment.realHP) update["system.hp.value"] = Math.min(shield.system.hp.max, rawShieldHP(shield) + adjustment.absorbed);
+    await shield.update(update, {soulforger: true, checkHP: false});
+  }
 }
 
 if (typeof Hooks !== "undefined") {
@@ -581,7 +644,8 @@ if (typeof Hooks !== "undefined") {
   });
   Hooks.once("ready", () => {
     if (game.system.id !== "pf2e") return;
-    run(provision().then(migrateIcons).then(sweep));
+    installDamageCapture(CONFIG.Actor.documentClass);
+    run(provision().then(migrateIcons).then(sweep).then(migrateShields));
     document.addEventListener("click", (event) => run(clickCard(event)));
     game.socket.on(`module.${MODULE}`, (data) => {
       if (!["stasis", "pain"].includes(data?.type) || !game.user.isGM || game.users.activeGM?.id !== game.user.id) return;

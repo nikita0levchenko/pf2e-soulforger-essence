@@ -2,7 +2,7 @@ import {test, beforeEach} from "node:test";
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
 import {POWERS, MODULE, SPELLS} from "../scripts/core.mjs";
-import {use, installDamageCapture, preUpdateItem, preCreateChat, onUpdateChat} from "../scripts/main.mjs";
+import {use, installDamageCapture} from "../scripts/main.mjs";
 
 let dialogs, updates, cards, notices, serial;
 beforeEach(() => {
@@ -45,7 +45,13 @@ function mockActor({remaining = 1, failConsume = false, level = 8} = {}) {
       update: async (changes) => {
         updates.push(changes);
         if (failConsume && "system.frequency.value" in changes) throw Error("resource update failed");
-        if ("system.frequency.value" in changes) item.system.frequency.value = changes["system.frequency.value"];
+        for (const [path, value] of Object.entries(changes)) {
+          const parts = path.split(".");
+          if (parts.at(-1).startsWith("-=")) {
+            const parent = foundry.utils.getProperty(item, parts.slice(0, -1).join("."));
+            if (parent) delete parent[parts.at(-1).slice(2)];
+          } else foundry.utils.setProperty(item, path, value);
+        }
       }};
     return item;
   }
@@ -79,7 +85,8 @@ for (const power of POWERS) test(`Use: ${power.en} prompts, applies, and spends 
     assert.equal(spell.flags[MODULE].effectId, applied[0].id);
   }
   if (power.id === "resolute-defiance") {
-    assert.equal(actor.items.get("shield").getFlag(MODULE, "tempHP").value, 10);
+    assert.equal(actor.items.get("shield").getFlag(MODULE, "shieldHP").value, 10);
+    assert.equal(actor.items.get("shield").system.hp.value, 30);
     assert.equal(actor.system.attributes?.hp?.temp, undefined);
   }
 });
@@ -184,66 +191,3 @@ test("wrapping the shield damage pipeline delegates unchanged and is idempotent"
   assert.deepEqual(actor.calculateHealthDelta({delta: 12}), {delta: 12});
 });
 
-function nativeShieldSimulation({hp = 10, temp = 10, hardness = 0} = {}) {
-  class FakeActor {
-    constructor() {
-      this.uuid = `Actor.shield${Math.random()}`; this.isOwner = true; this.hardness = hardness;
-      this.system = {attributes: {shield: {raised: true}}};
-      this.items = new Map([["effect", {id: "effect", type: "effect", system: {}}]]);
-      this.heldShield = {id: "shield", type: "shield", actor: this, _source: {system: {hp: {value: hp}}},
-        flags: {[MODULE]: {tempHP: {value: temp, max: temp, source: "effect"}}},
-        getFlag(scope, key) {return this.flags[scope]?.[key];},
-        async setFlag(scope, key, value) {this.flags[scope][key] = value;}};
-      this.items.set("shield", this.heldShield);
-    }
-    calculateHealthDelta(args) {return args;}
-    async applyDamage(args) {
-      // Mirrors the important PF2e order: uncapped character delta, then capped shield HP update.
-      const fullDamage = Number(args.damage);
-      this.calculateHealthDelta({delta: Math.max(0, fullDamage - this.hardness)});
-      const current = this.heldShield._source.system.hp.value;
-      const planned = Math.min(current, fullDamage);
-      const changes = {"system.hp.value": current - planned};
-      preUpdateItem(this.heldShield, changes, {});
-      this.heldShield._source.system.hp.value = changes["system.hp.value"];
-      if (changes.flags) this.heldShield.flags = changes.flags;
-      const message = {actor: this, flags: {pf2e: {context: {type: "damage-taken"}, appliedDamage: {shield: {id: "shield", damage: planned}}}},
-        updateSource(changes) {for (const [path, value] of Object.entries(changes)) foundry.utils.setProperty(this, path, value);}};
-      preCreateChat(message);
-      return message;
-    }
-  }
-  installDamageCapture(FakeActor);
-  return new FakeActor();
-}
-test("native capped shield damage still consumes the full temporary pool on an overwhelming hit", async () => {
-  const actor = nativeShieldSimulation();
-  const message = await actor.applyDamage({damage: 25, shieldBlockRequest: true});
-  assert.equal(actor.heldShield._source.system.hp.value, 0);
-  assert.equal(actor.heldShield.getFlag(MODULE, "tempHP").value, 0);
-  assert.equal(message.flags.pf2e.appliedDamage.shield.damage, 10);
-  assert.equal(message.flags[MODULE].shieldUndo.absorbed, 10);
-});
-test("shield temporary HP are exhausted across successive real damage applications", async () => {
-  const actor = nativeShieldSimulation();
-  const first = await actor.applyDamage({damage: 8, shieldBlockRequest: true});
-  assert.equal(actor.heldShield._source.system.hp.value, 10);
-  assert.equal(actor.heldShield.getFlag(MODULE, "tempHP").value, 2);
-  assert.equal(first.flags.pf2e.appliedDamage.shield.damage, 0);
-  await actor.applyDamage({damage: 5, shieldBlockRequest: true});
-  assert.equal(actor.heldShield._source.system.hp.value, 7);
-  assert.equal(actor.heldShield.getFlag(MODULE, "tempHP").value, 0);
-});
-test("native damage undo restores shield temporary HP without granting actor temporary HP", async () => {
-  const actor = nativeShieldSimulation();
-  const message = await actor.applyDamage({damage: 8, shieldBlockRequest: true});
-  await onUpdateChat(message, {"flags.pf2e.appliedDamage.isReverted": true}, {}, "user");
-  assert.equal(actor.heldShield.getFlag(MODULE, "tempHP").value, 10);
-  assert.equal(actor.system.attributes.hp?.temp, undefined);
-});
-test("actor hardness does not undercount the damage dealt to a blocking shield", async () => {
-  const actor = nativeShieldSimulation({hp: 20, temp: 10, hardness: 5});
-  await actor.applyDamage({damage: 18, shieldBlockRequest: true});
-  assert.equal(actor.heldShield._source.system.hp.value, 12);
-  assert.equal(actor.heldShield.getFlag(MODULE, "tempHP").value, 0);
-});

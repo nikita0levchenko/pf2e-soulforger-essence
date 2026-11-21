@@ -1,7 +1,7 @@
 /** Pure data and rule builders. Does not depend on Foundry globals. */
 import {ESSENCE_ICON, CORRUPTION_ICON, STASIS_ICON, IMMOBILIZED_ICON, powerIcon} from "./icons.mjs";
 export const MODULE = "soulforger-essence";
-export const VERSION = "1.2.1";
+export const VERSION = "1.2.2";
 export const ICON = ESSENCE_ICON;
 export const IDS = Object.freeze({
   feat: "SEssenceFeat0001", flaw: "SEssenceFlaw0001",
@@ -55,8 +55,8 @@ export const POWERS = Object.freeze([
     benefit: "Статусный бонус +2 к КБ против физических дистанционных атак. Реакция после промаха: отражённый урон того же типа, равный половине Твёрдости твоего щита.",
     flaw: "Слабость 5 к физическим дистанционным атакам."},
   {id: "resolute-defiance", ru: "Решительное неповиновение", en: "Resolute Defiance", equipment: "shield",
-    benefit: "Щит получает +2 к Твёрдости и временные HP, равные уровню + 2. Предоставляется Shield Block, если его нет.",
-    flaw: "Получив урон с поднятым щитом или использовав Shield Block, выполни flat check DC 5. При провале связанный щит убирается, другой щит падает."}
+    benefit: "Выбранный щит получает +2 к Твёрдости и прибавку к текущим и максимальным ОЗ, равную уровню + 2, на время эссенции. Урон сначала расходует добавленные ОЗ. Предоставляется Shield Block, если его нет.",
+    flaw: "При блокировании урона автоматически выполни чистую проверку КС 5 до применения блока. При провале щит падает, эффект «Поднять щит» снимается, урон применяется без снижения от блока. Получение урона с поднятым щитом также вызывает проверку."}
 ]);
 export const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g,
   (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[c]);
@@ -127,7 +127,8 @@ export function essenceRules(power, config = {}) {
     case "reflecting-spirit":
       rules.push(fm("ac", 2, "status", physicalRanged), note("ac", power.benefit)); break;
     case "resolute-defiance":
-      rules.push({key: "ItemAlteration", itemId: id, mode: "add", property: "hardness", value: 2});
+      rules.push({key: "ItemAlteration", itemId: id, mode: "add", property: "hardness", value: 2},
+        {key: "ItemAlteration", itemId: id, mode: "add", property: "hp-max", value: (config.level ?? 1) + 2});
       if (!config.hasShieldBlock) rules.push({key: "GrantItem", flag: "soulforgerShieldBlock",
         uuid: "Compendium.pf2e.feats-srd.Item.jM72TjJ965jocBV8", allowDuplicate: false,
         onDeleteActions: {granter: "cascade"}});
@@ -188,12 +189,6 @@ export function stasisEffect(critical, worldTime, initiative) {
         inMemoryOnly: true}] : allSpeeds(-10), traits: {value: ["divine"]}},
     flags: {[MODULE]: {kind: "stasis", critical, version: VERSION}}};
 }
-export function absorbShieldTemp(currentHP, nextHP, temporaryHP) {
-  const damage = Math.max(0, currentHP - nextHP);
-  const absorbed = Math.min(damage, Math.max(0, temporaryHP));
-  return {hp: Math.max(0, Math.min(currentHP, nextHP + absorbed)), temp: Math.max(0, temporaryHP - absorbed), absorbed};
-}
-
 /** All dialogs complete before mutation. Roll back effects if resource consumption fails. */
 export async function activateTransaction({remaining, choose, apply, consume, rollback}) {
   if (remaining !== null && remaining <= 0) return {status: "exhausted"};
