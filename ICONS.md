@@ -1,28 +1,28 @@
-# Иконки эффектов — версия 1.2.1
+# Effect Icons — Version 1.2.1
 
-Все приведённые файлы входят в стандартный пакет системы PF2e. Модуль использует пути `systems/pf2e/icons/`; отдельные изображения в модуль не копируются. Иконки предметов инвентаря сохраняются из их собственного поля `img`.
+All files listed here are included in the standard PF2e system package. The module references paths under `systems/pf2e/icons/`; individual image files are not copied into the module. Inventory items retain the icons stored in their own `img` fields.
 
-| Действие и служебный эффект | Иконка |
+| Action and Helper Effect | Icon |
 | --- | --- |
-| Проявить форму эссенции / `(manifest)` | `systems/pf2e/icons/spells/positive-luminance.webp` |
-| Применить изъян порока / `(corruption)` | `systems/pf2e/icons/spells/eradicate-undeath.webp` |
+| Manifest Essence Form / `(manifest)` | `systems/pf2e/icons/spells/positive-luminance.webp` |
+| Apply Corruption Flaw / `(corruption)` | `systems/pf2e/icons/spells/eradicate-undeath.webp` |
 
-| Эссенция | Усиление | Изъян |
+| Essence Power | Benefit | Corruption Flaw |
 | --- | --- | --- |
-| Адаптирующая личность / Adaptable Persona | `systems/pf2e/icons/spells/fly.webp` | `systems/pf2e/icons/spells/slow.webp` |
-| Связывающий дух / Bounding Spirit | `systems/pf2e/icons/spells/telekinetic-projectile.webp` | `systems/pf2e/icons/spells/mirrors-misfortune.webp` |
-| Укоренившийся страх / Deep-Seated Fear | `systems/pf2e/icons/spells/fear.webp` | `systems/pf2e/icons/conditions/frightened.webp` |
-| Решительная выносливость / Determined Toughness | `systems/pf2e/icons/spells/endure.webp` | `systems/pf2e/icons/conditions/drained.webp` |
-| Вредящая злость / Harmful Malice | `systems/pf2e/icons/spells/harm.webp` | `systems/pf2e/icons/conditions/enfeebled.webp` |
-| Героическое сердце / Heroic Heart | `systems/pf2e/icons/spells/heroism.webp` | `systems/pf2e/icons/spells/warriors-regret.webp` |
-| Исцеляющая благодать / Healing Grace | `systems/pf2e/icons/spells/heal.webp` | `systems/pf2e/icons/spells/touch-of-corruption.webp` |
-| Магическая стойкость / Magical Resilience | `systems/pf2e/icons/spells/spell-immunity.webp` | `systems/pf2e/icons/spells/spellwrack.webp` |
-| Планарная связь / Planar Bond | `systems/pf2e/icons/spells/resist-energy.webp` | `systems/pf2e/icons/spells/vision-of-weakness.webp` |
-| Планарная боль / Planar Pain | `systems/pf2e/icons/spells/weapon-surge.webp` | `systems/pf2e/icons/spells/blood-vendetta.webp` |
-| Притяжение стазиса / Pull of Stasis | `systems/pf2e/icons/spells/stasis.webp` | `systems/pf2e/icons/spells/slow.webp` |
-| Отражающий дух / Reflecting Spirit | `systems/pf2e/icons/equipment/shields/specific-shields/reflecting-shield.webp` | `systems/pf2e/icons/conditions/off-guard.webp` |
-| Решительное неповиновение / Resolute Defiance | `systems/pf2e/icons/features/classes/shield-block.webp` | `systems/pf2e/icons/conditions/broken.webp` |
+| Adaptable Persona | `systems/pf2e/icons/spells/fly.webp` | `systems/pf2e/icons/spells/slow.webp` |
+| Bounding Spirit | `systems/pf2e/icons/spells/telekinetic-projectile.webp` | `systems/pf2e/icons/spells/mirrors-misfortune.webp` |
+| Deep-Seated Fear | `systems/pf2e/icons/spells/fear.webp` | `systems/pf2e/icons/conditions/frightened.webp` |
+| Determined Toughness | `systems/pf2e/icons/spells/endure.webp` | `systems/pf2e/icons/conditions/drained.webp` |
+| Harmful Malice | `systems/pf2e/icons/spells/harm.webp` | `systems/pf2e/icons/conditions/enfeebled.webp` |
+| Heroic Heart | `systems/pf2e/icons/spells/heroism.webp` | `systems/pf2e/icons/spells/warriors-regret.webp` |
+| Healing Grace | `systems/pf2e/icons/spells/heal.webp` | `systems/pf2e/icons/spells/touch-of-corruption.webp` |
+| Magical Resilience | `systems/pf2e/icons/spells/spell-immunity.webp` | `systems/pf2e/icons/spells/spellwrack.webp` |
+| Planar Bond | `systems/pf2e/icons/spells/resist-energy.webp` | `systems/pf2e/icons/spells/vision-of-weakness.webp` |
+| Planar Pain | `systems/pf2e/icons/spells/weapon-surge.webp` | `systems/pf2e/icons/spells/blood-vendetta.webp` |
+| Pull of Stasis | `systems/pf2e/icons/spells/stasis.webp` | `systems/pf2e/icons/spells/slow.webp` |
+| Reflecting Spirit | `systems/pf2e/icons/equipment/shields/specific-shields/reflecting-shield.webp` | `systems/pf2e/icons/conditions/off-guard.webp` |
+| Resolute Defiance | `systems/pf2e/icons/features/classes/shield-block.webp` | `systems/pf2e/icons/conditions/broken.webp` |
 
-Файлы проверены по исходному пакету [foundryvtt/pf2e](https://github.com/foundryvtt/pf2e/tree/d507983d7611aad7bee01b473ba918436c6ea380/static/icons).
+These files were verified against the source package in [foundryvtt/pf2e](https://github.com/foundryvtt/pf2e/tree/d507983d7611aad7bee01b473ba918436c6ea380/static/icons).
 
-При обновлении изображения уже добавленных действий и эффектов модуля заменяются автоматически. Числовые параметры, длительность, текущие состояния и использованный дневной ресурс этим обновлением не меняются.
+When the module is updated, icons on its existing actions and effects are replaced automatically. This update does not change numerical values, durations, current conditions, or the expended daily use.
