@@ -7,12 +7,13 @@
   "flags": {
     "soulforger-essence": {
       "asset": true,
-      "version": "1.2.2",
+      "version": "1.3.1",
+      "language": "en",
       "action": "corruption"
     }
   },
   "_id": "SEssenceFlaw0001",
-  "name": "Применить изъян порока",
+  "name": "Apply Corruption Flaw",
   "type": "action",
   "system": {
     "actionType": {
@@ -28,13 +29,13 @@
       "rarity": "common"
     },
     "description": {
-      "value": "<p><strong>Свободное действие.</strong> Нажми «Использовать», выбери изъян силы эссенции. Изъян действует без ограничения времени до удаления эффекта. Дневной лимит формы эссенции не расходуется.</p>"
+      "value": "<p><strong>Free action.</strong> Click Use and choose an essence power’s corruption flaw. The flaw lasts until its effect is removed. It does not expend the essence form’s daily use.</p>"
     },
     "rules": [],
     "category": null,
     "slug": "soulforger-apply-corruption",
     "selfEffect": {
-      "name": "Выбрать изъян порока",
+      "name": "Choose a Corruption Flaw",
       "uuid": "Item.SCorruptGate0001"
     }
   },

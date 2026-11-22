@@ -1,7 +1,7 @@
 import {test, beforeEach} from "node:test";
 import assert from "node:assert/strict";
 import {MODULE, makeEffect, powerById} from "../scripts/core.mjs";
-import {grantShieldHP, cleanup, migrateShieldHP, installDamageCapture,
+import {grantShieldHP, cleanup, migrateShieldHP, migrateActorTexts, installDamageCapture,
   preUpdateItem, preCreateChat, onUpdateChat, onChat} from "../scripts/main.mjs";
 
 let totals, checks, events;
@@ -23,7 +23,7 @@ beforeEach(() => {
   totals = []; checks = []; events = [];
   globalThis.foundry = {utils: {getProperty: get, setProperty: set}};
   globalThis.ui = {notifications: {warn() {}, error() {}, info() {}}};
-  globalThis.game = {user: {id: "user"}, time: {worldTime: 700}, pf2e: {
+  globalThis.game = {i18n: {lang: "ru", localize: (key) => key}, user: {id: "user"}, time: {worldTime: 700}, pf2e: {
     CheckModifier: class {constructor(label, statistic) {
       this.label = label; this.modifiers = statistic.modifiers.map((m) => m.clone());
       assert.equal(this.modifiers.length, 0, "flat checks must not inherit any statistic modifiers");
@@ -57,7 +57,10 @@ class ShieldActor {
   get shield() {return this.items.get("shield");}
   get heldShield() {return this.shield?.isEquipped ? this.shield : null;}
   prepare() {
-    for (const item of this.items.values()) item.system = structuredClone(item._source.system);
+    for (const item of this.items.values()) {
+      item.system = structuredClone(item._source.system);
+      item.name = item._source.name ?? item.id;
+    }
     for (const effect of this.items.values()) {
       if (effect.type !== "effect" || effect.isExpired || effect.system.expired) continue;
       for (const rule of effect.system.rules ?? []) {
@@ -316,4 +319,30 @@ test("undo from before the update restores migrated shield HP", async () => {
   const message = {actor, flags: {[MODULE]: {shieldUndo: {shieldId: "shield", source: effect.id, absorbed: 7}}}};
   await onUpdateChat(message, {flags: {pf2e: {appliedDamage: {isReverted: true}}}}, {}, "user");
   assert.equal(actor.shield.system.hp.value, 30); assert.equal(actor.shield.getFlag(MODULE, "shieldHP").value, 10);
+});
+
+for (const total of [4, 5]) test(`English shield check (${total}) preserves block success/failure mechanics`, async () => {
+  game.i18n.lang = "en";
+  const actor = new ShieldActor(); flaw(actor); const effect = await manifest(actor); totals.push(total);
+  await actor.applyDamage({damage: 12, shieldBlockRequest: true});
+  assert(effect.name.startsWith("Essence Form: Resolute Defiance"));
+  assert.equal(checks.length, 1);
+  assert.equal(checks[0].check.label, "Resolute Defiance flaw — DC 5 flat check");
+  assert.equal(actor.system.attributes.hp.value, total < 5 ? 88 : 95);
+  assert.equal(actor.shield.system.hp.value, total < 5 ? 30 : 25);
+  assert.equal(actor.shield.system.equipped.carryType, total < 5 ? "dropped" : "held");
+});
+
+test("changing generated text to English and rerunning shield migration never refills spent bonus HP", async () => {
+  const actor = new ShieldActor(); const effect = await manifest(actor);
+  await actor.applyDamage({damage: 15, shieldBlockRequest: true});
+  actor.updateEmbeddedDocuments = async (_type, updates, options) => {
+    for (const {_id, ...changes} of updates) await actor.items.get(_id).update(changes, options);
+  };
+  game.i18n.lang = "en";
+  await migrateActorTexts(actor); await migrateShieldHP(actor);
+  assert(effect.name.startsWith("Essence Form: Resolute Defiance"));
+  assert.equal(actor.shield.system.hp.value, 22); assert.equal(actor.shield.system.hp.max, 30);
+  assert.equal(actor.shield.getFlag(MODULE, "shieldHP").value, 2);
+  assert.equal(actor.system.attributes.hp.value, 92);
 });

@@ -1,6 +1,24 @@
-# Manifest Essence Form
+# Soulforger: effect automation
 
-A custom ability for Foundry VTT 14 / Pathfinder 2e 8.6.1. UI labels in this document are translated from the module's Russian interface.
+A custom ability for Foundry VTT 14 / Pathfinder 2e 8.6.1, with English and Russian localization.
+
+## Update 1.3.1
+
+The module supports English and Russian through Foundry’s native localization system. Dialogs, buttons, accessibility labels, all 13 essence powers and 13 corruption flaws, notifications, chat cards, action/effect names and descriptions, and temporary spell names are translated. English is the fallback for unsupported languages.
+
+To select a language, change Foundry’s Language setting and reload the world. Existing generated actions and effects are updated on world load. The migration preserves daily uses, item IDs and links, effect timing, shield HP and its spent bonus, and custom names/descriptions. It also keeps Deep-Seated Fear’s language-penalty suppression matched to PF2e’s current localized modifier label.
+
+Generated item names and descriptions are shared world data: they use the language of the user creating or updating them. Dialogs and new messages use the current client’s language. Existing chat messages retain the language in which they were created. Native PF2e spell descriptions follow the system’s own translations.
+
+The dictionaries are `lang/en.json` and `lang/ru.json`. Run `npm run build` after editing them; it regenerates the runtime fallback dictionaries and the four importable action/helper JSON files. The bundled imports use English; normal world provisioning uses the active language.
+
+To update, replace `Data/modules/soulforger-essence` with the folder from this archive and reload the world. Existing characters do not need their actions reimported.
+
+## Update 1.2.2
+
+Resolute Defiance increases the selected shield’s current and maximum HP by the character’s level + 2, in addition to its +2 Hardness. At level 8, a 20/20 HP shield becomes 30/30 HP. PF2e recalculates the Broken Threshold from the increased maximum. Damage consumes the added HP first. Ending the essence removes only unused bonus HP; damage to the original HP is preserved. Native damage undo restores shield HP and the unused bonus.
+
+The corruption flaw rolls one native DC 5 flat check before Shield Block is applied. On a 1–4, remove Raise a Shield, drop the blocking shield, and apply damage without Shield Block reduction. On a 5–20, block normally. Resistances, weaknesses, immunities, and actor Hardness remain handled by PF2e. This works even without an active essence and when Hardness would absorb the whole hit. The essence stays attached to a dropped shield until it ends.
 
 ## Update 1.2.1
 
@@ -28,7 +46,7 @@ To update an existing installation, replace the `soulforger-essence` module fold
 
 1. Close Foundry or stop the server.
 2. Extract the `soulforger-essence` folder from the archive into your user data folder's `Data/modules` directory. After extraction, the file must be located at `Data/modules/soulforger-essence/module.json`, without an additional nested folder.
-3. Start Foundry, open a PF2e world, and enable **Soulforger: Manifest Essence Form** in Manage Modules. Confirm the world reload.
+3. Start Foundry, open a PF2e world, and enable **Soulforger: effect automation** in Manage Modules. Confirm the world reload.
 4. Log in as a GM. A folder named **Soulforger — Essence Form** will appear automatically in the Items directory.
 5. Drag **Manifest Essence Form** from that folder onto the character sheet. Two free actions will appear in the Actions section:
    - **Manifest Essence Form** — once per day;
@@ -72,7 +90,7 @@ The daily use is stored in the native `system.frequency` field and is restored b
 - Determined Toughness reduces six status penalties through AdjustModifier. Condition values, HP loss from drained, and the spell-disruption DC from stupefied remain unchanged.
 - Pull of Stasis automatically processes a Strike against a targeted creature if PF2e has determined the degree of success. A connected GM handles requests to modify another actor. On a critical hit, immobilized is tied to the temporary effect and ends when that effect ends. Automatic application requires a targeted creature and a determined result.
 - Reflecting Spirit provides its conditional defense automatically. After a qualifying miss, the player clicks the reaction button on the effect's chat card. This creates a normal PF2e damage roll; damage to the attacker is applied with the standard button. The player/GM tracks the reaction cost and checks the trigger. For the armor option without a shield, the module does not invent a formula: it reports that the GM must determine the value.
-- Resolute Defiance changes the selected shield's Hardness and temporarily grants Shield Block if needed. Temporary HP are stored **on the shield**, not on the character. During normal Shield Block damage application, they absorb damage to the shield before its actual HP are lost; the bonus does not change maximum HP or the Broken Threshold. The native damage undo restores the corresponding temporary HP.
+- Resolute Defiance increases the selected shield’s current and maximum HP by level + 2, grants +2 Hardness, and temporarily grants Shield Block if needed. PF2e recalculates the Broken Threshold from the increased maximum. Damage consumes the added HP first; expiry removes only the unused bonus while preserving damage. Native damage undo restores the corresponding HP and unused bonus. Character HP are not increased.
 
 ## Corruption Flaw Triggers
 
@@ -89,7 +107,7 @@ The daily use is stored in the native `system.frequency` field and is restored b
 | Planar Bond | Weakness 1 to all damage |
 | Planar Pain | After weapon/unarmed attack damage is actually applied to a target, the character takes 2 damage of the last selected type; innate immunity to vitality/void does not prevent this damage. PF2e handles resistances and weaknesses |
 | Reflecting Spirit | A conditional weakness 5 to physical ranged attacks |
-| Resolute Defiance | A DC 5 check after taking damage with a raised shield / blocking. On a failure, the shield bound to the current essence is dismissed; any other shield is dropped |
+| Resolute Defiance | One automatic DC 5 flat check before Shield Block. Failure removes Raise a Shield, drops the blocking shield, and applies damage without the block’s reduction. Success allows normal Shield Block. Taking damage with a raised shield without blocking also triggers a check |
 
 For the Planar Pain flaw, the ability remembers the last damage type selected. If no previous selection exists, you can specify it in a separate window. Changing it during a later manifestation also updates the active flaw.
 
@@ -101,7 +119,7 @@ Applying an essence does not change the character's equipped items or remove inv
 
 ## Differences from the Published Archetype
 
-As requested by the user, manifestation here is a **free action**, allows a new power to be selected each time, and has **one shared daily limit**. These settings intentionally differ from the standard Manifest Soulforged Armament / Soul Arsenal rules.
+As requested by the user, manifestation here is a **free action**, allows a new power to be selected each time, and has **one shared daily limit**. These settings intentionally differ from the standard Manifest Soulforged Armament / Soul Arsenal rules. Resolute Defiance also uses an increase to current/maximum shield HP and a pre-block corruption check that drops the shield on failure, as requested for this module.
 
 ## Validation and Source Versions
 
@@ -109,8 +127,8 @@ Reference item: a Bespell Strikes export from Foundry 14.369, PF2e 8.6.1. The `s
 
 Local JavaScript syntax checks and automated tests cover effect construction, item filtering, selection cancellation, the daily use counter, rollback on error, all 26 effect variants, and protection against double-click activation. Workflow tests use mocked Foundry APIs. The module has not been run inside a live Foundry client; interaction with the modules used in a particular world requires testing in that world.
 
-Version 1.2.0 checks cover image dropdowns, all 26 descriptions, changing the selected option, previewing descriptions without expending a use, keyboard controls, closing the dropdown, rebinding event handlers, and updating icons on existing effects. DOM checks use LinkeDOM; the remaining checks use mocked Foundry APIs. All 92 local tests pass.
+Version 1.2.0 checks cover image dropdowns, all 26 descriptions, changing the selected option, previewing descriptions without expending a use, keyboard controls, closing the dropdown, rebinding event handlers, and updating icons on existing effects. DOM checks use LinkeDOM; the remaining checks use mocked Foundry APIs. The original 92-test suite covered those changes. The current 139-test suite also covers the shield changes, both languages, translation completeness and placeholders, all English activations, localized generated-item migration, preservation of custom text and resources, and native localization integration. All 139 local tests pass.
 
-To run the local tests, install the development dependencies with `npm install --ignore-scripts`, then run `npm test`. These dependencies are not required to use the module in Foundry.
+To run the local checks, install the development dependencies with `npm install --ignore-scripts`, run `npm run build`, then run `npm test`. These dependencies are not required to use the module in Foundry.
 
 Rules: https://2e.aonprd.com/Archetypes.aspx?ID=393 and https://2e.aonprd.com/Rules.aspx?ID=3689. System source code: https://github.com/foundryvtt/pf2e. The game mechanics described belong to Pathfinder and Paizo; the module is a separate custom software implementation, implemented by daion_anri.

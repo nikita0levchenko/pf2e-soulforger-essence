@@ -7,16 +7,17 @@
   "flags": {
     "soulforger-essence": {
       "asset": true,
-      "version": "1.2.2",
+      "version": "1.3.1",
+      "language": "en",
       "route": "manifest"
     }
   },
   "_id": "SEssenceGate0001",
-  "name": "Soulforger: служебный эффект (manifest)",
+  "name": "Soulforger: helper effect (manifest)",
   "type": "effect",
   "system": {
     "description": {
-      "value": "<p>Служебный эффект. При его применении модуль открывает выбор эссенции.</p>"
+      "value": "<p>Helper effect. Applying it opens the module’s essence selection dialog.</p>"
     },
     "duration": {
       "value": -1,

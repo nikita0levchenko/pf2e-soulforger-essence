@@ -9,7 +9,7 @@ beforeEach(() => {
   dialogs = []; updates = []; cards = []; notices = []; serial = 0;
   globalThis.ui = {notifications: Object.fromEntries(["info", "warn", "error"].map((kind) => [kind, (text) => notices.push({kind, text})]))};
   globalThis.game = {time: {worldTime: 700}, user: {id: "user", targets: new Set()},
-    pf2e: {system: {sluggify: (s) => s.toLowerCase().replaceAll(" ", "-")}}, i18n: {localize: () => "Непонятная речь"}};
+    pf2e: {system: {sluggify: (s) => s.toLowerCase().replaceAll(" ", "-")}}, i18n: {lang: "ru", localize: (key) => key === "PF2E.Actions.Demoralize.Unintelligible" ? "Непонятная речь" : key}};
   globalThis.foundry = {utils: {
     getProperty: (object, path) => path.split(".").reduce((o, k) => o?.[k], object),
     setProperty: (object, path, value) => {const parts = path.split("."); const last = parts.pop();
@@ -189,5 +189,36 @@ test("wrapping the shield damage pipeline delegates unchanged and is idempotent"
   const actor = new FakeActor(); const result = await actor.applyDamage({damage: 7});
   assert.equal(result.actor, actor); assert.equal(result.args.damage, 7);
   assert.deepEqual(actor.calculateHealthDelta({delta: 12}), {delta: 12});
+});
+
+for (const power of POWERS) test(`English activation and corruption: ${power.en}`, async () => {
+  game.i18n.lang = "en";
+  const actor = mockActor();
+  const dialogOptions = [];
+  const wait = foundry.applications.api.DialogV2.wait;
+  foundry.applications.api.DialogV2.wait = async (options) => {dialogOptions.push(options); return wait(options);};
+  dialogs.push(power.id);
+  if (power.equipment) dialogs.push(({melee: "sword", weapon: "sword", armor: "armor", shield: "shield", "armor-shield": "shield"})[power.equipment]);
+  if (power.id === "adaptable-persona") dialogs.push("fly");
+  if (["planar-bond", "planar-pain"].includes(power.id)) dialogs.push("fire");
+  await use(actor, actor.items.get("manifest"));
+  dialogs.push(power.id);
+  await use(actor, actor.items.get("corruption"));
+  const essence = actor.items.contents.find((i) => i.flags?.[MODULE]?.kind === "essence");
+  const flaw = actor.items.contents.find((i) => i.flags?.[MODULE]?.kind === "corruption");
+  assert(essence.name.startsWith(`Essence Form: ${power.en}`));
+  assert.equal(flaw.name, `Corruption Flaw: ${power.en}`);
+  assert.equal(actor.items.get("manifest").system.frequency.value, 0);
+  assert.equal(cards.length, 2); assert.equal(dialogs.length, 0);
+  for (const options of dialogOptions) {
+    assert.deepEqual(options.buttons.map((b) => b.label), ["Choose", "Cancel"]);
+    assert(!/\p{Script=Cyrillic}/u.test(options.window.title));
+  }
+  assert.equal(actor.items.get("shield").name, "Щит", "the user's inventory names must remain intact");
+  if (SPELLS[power.id]) {
+    const entry = actor.items.contents.find((i) => i.type === "spellcastingEntry");
+    assert.equal(entry.name, `Essence: ${power.en}`);
+    assert.equal(actor.items.contents.find((i) => i.type === "spell").name, SPELLS[power.id].name);
+  }
 });
 

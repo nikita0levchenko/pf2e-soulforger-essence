@@ -1,6 +1,7 @@
+import {t, language, translate, withLanguage} from "./i18n.mjs";
 import {
   MODULE, VERSION, IDS, POWERS, SPELLS, CONDITIONS, DAMAGE_TYPES, ICON,
-  escapeHTML, powerLabel, powerById, actorLevel, eligibleItems, isShield,
+  escapeHTML, powerName, powerLabel, powerById, actorLevel, eligibleItems, isShield,
   makeEffect, itemTemplates, stasisEffect, activateTransaction
 } from "./core.mjs";
 import {powerChoices, renderChoiceContent, bindChoiceDescriptions} from "./choice-ui.mjs";
@@ -25,7 +26,7 @@ const fail = (error) => { console.error(`${MODULE} |`, error); ui.notifications.
 const run = (promise) => Promise.resolve(promise).catch(fail);
 
 async function select(title, choices, message = "") {
-  if (!choices.length) { ui.notifications.warn("Нет подходящих вариантов."); return null; }
+  if (!choices.length) { ui.notifications.warn(t("Message.NoChoices")); return null; }
   const enhanced = choices.some((choice) => choice.description || choice.img);
   const content = renderChoiceContent(title, choices, message);
   let cleanup = () => {};
@@ -37,9 +38,9 @@ async function select(title, choices, message = "") {
         cleanup = bindChoiceDescriptions(dialog.element, choices, (description) => run(showDescription(description)));
       }} : {}),
     buttons: [
-      {action: "choose", label: "Выбрать", default: true,
+      {action: "choose", label: t("Button.Choose"), default: true,
         callback: (_event, button) => button.form?.elements.namedItem("choice")?.value ?? null},
-      {action: "cancel", label: "Отмена", callback: () => null}
+      {action: "cancel", label: t("Button.Cancel"), callback: () => null}
     ], close: () => {cleanup(); return null;}
   });
 }
@@ -48,17 +49,17 @@ function showDescription(description) {
   return new foundry.applications.api.DialogV2({
     window: {title: description.title, icon: "fa-solid fa-circle-info"},
     position: {width: 560}, modal: false, content: description.content,
-    buttons: [{action: "close", label: "Закрыть", default: true}]
+    buttons: [{action: "close", label: t("Button.Close"), default: true}]
   }).render({force: true});
 }
 
 async function collect(actor, corruption) {
-  const choice = await select(corruption ? "Применить изъян порока" : "Проявить форму эссенции",
+  const choice = await select(corruption ? t("Action.Corruption") : t("Action.Manifest"),
     powerChoices({corruption, level: actorLevel(actor)}));
   const power = powerById(choice);
   if (!power) return null;
   if (effectsOf(actor, corruption ? "corruption" : "essence", power.id).length) {
-    ui.notifications.info("Этот эффект уже действует. Второй экземпляр не добавлен."); return null;
+    ui.notifications.info(t("Message.AlreadyActive")); return null;
   }
   const config = {level: actorLevel(actor)};
   if (!corruption && power.id === "deep-seated-fear") config.unintelligibleSlug =
@@ -68,19 +69,19 @@ async function collect(actor, corruption) {
   if (!corruption && power.equipment) {
     const candidates = eligibleItems(itemsOf(actor), power.equipment);
     if (!candidates.length) {
-      ui.notifications.warn(`Для силы «${power.ru}» в инвентаре нет подходящего предмета.`); return null;
+      ui.notifications.warn(t("Message.NoEquipment", {power: powerName(power)})); return null;
     }
-    const id = await select("Выбери предмет для силы эссенции", candidates.map((i) =>
+    const id = await select(t("Dialog.Equipment"), candidates.map((i) =>
       ({value: i.id, label: i.name, img: i.img || DEFAULT_ITEM_ICONS[i.type] || ICON})), power.benefit);
     if (!id) return null;
     const target = actor.items.get(id);
-    if (!target || !eligibleItems([target], power.equipment).length) throw Error("Выбранный предмет больше недоступен.");
+    if (!target || !eligibleItems([target], power.equipment).length) throw Error(t("Error.ItemMissing"));
     Object.assign(config, {targetId: target.id, targetName: target.name});
   }
   if (!corruption && power.id === "adaptable-persona") {
-    config.movement = await select("Выбери способ передвижения", [
-      {value: "climb", label: "Карабканье"}, {value: "swim", label: "Плавание"},
-      ...(config.level >= 8 ? [{value: "fly", label: "Полёт"}] : [])
+    config.movement = await select(t("Dialog.Movement"), [
+      {value: "climb", label: t("Movement.climb")}, {value: "swim", label: t("Movement.swim")},
+      ...(config.level >= 8 ? [{value: "fly", label: t("Movement.fly")}] : [])
     ]);
     if (!config.movement) return null;
     config.landSpeedFormula = actor.system?.movement?.speeds?.land
@@ -89,7 +90,7 @@ async function collect(actor, corruption) {
   if ((!corruption && ["planar-pain", "planar-bond"].includes(power.id)) || (corruption && power.id === "planar-pain")) {
     config.damageType = corruption ? actor.getFlag(MODULE, "lastPlanarPain") : null;
     if (!config.damageType || !(config.damageType in DAMAGE_TYPES)) {
-      config.damageType = await select(corruption ? "Последний тип урона Планарной боли" : "Выбери тип урона",
+      config.damageType = await select(corruption ? t("Dialog.PreviousDamage") : t("Dialog.Damage"),
         Object.entries(DAMAGE_TYPES).map(([value, label]) => ({value, label})));
     }
     if (!config.damageType) return null;
@@ -104,15 +105,15 @@ async function addInnate(actor, effect, power, level) {
   const definition = SPELLS[power.id];
   if (!definition || level < (definition.minLevel ?? 1)) return;
   const template = await fromUuid(definition.uuid);
-  if (!template || template.type !== "spell") throw Error(`Не найдено системное заклинание ${definition.name}.`);
+  if (!template || template.type !== "spell") throw Error(t("Error.SpellMissing", {name: definition.name}));
   const rank = Math.ceil(level / 2) - (power.id === "magical-resilience" ? 1 : 0);
   const [entry] = await actor.createEmbeddedDocuments("Item", [{
-    name: `Эссенция: ${power.ru}`, type: "spellcastingEntry", img: ICON,
+    name: t("Item.EssenceEntry", {power: powerName(power)}), type: "spellcastingEntry", img: ICON,
     system: {ability: {value: "cha"}, tradition: {value: "divine"}, prepared: {value: "innate"},
       proficiency: {value: 1}, showSlotlessLevels: {value: true}, autoHeightenLevel: {value: rank}},
     flags: {[MODULE]: {kind: "temporary-spellcasting", effectId: effect.id}}
   }]);
-  if (!entry) throw Error("Не удалось добавить временное врождённое заклинание.");
+  if (!entry) throw Error(t("Error.SpellEntry"));
   const spell = template.toObject();
   delete spell._id; delete spell.folder; delete spell.ownership;
   spell.name = definition.name;
@@ -158,14 +159,14 @@ export async function cleanup(actor, effectId) {
 async function applySelection(actor, {power, config}, corruption) {
   const source = makeEffect(power, config, {...effectExpiration(actor), corruption});
   const [effect] = await actor.createEmbeddedDocuments("Item", [source]);
-  if (!effect) throw Error("Эффект не создан. Дневное использование сохранено.");
+  if (!effect) throw Error(t("Error.EffectNotCreated"));
   try {
-    if (effect.rules?.some((rule) => rule.invalid)) throw Error("Версия PF2e отклонила правило эффекта. Изменения отменены.");
+    if (effect.rules?.some((rule) => rule.invalid)) throw Error(t("Error.InvalidRule"));
     if (!corruption) {
       await addInnate(actor, effect, power, config.level);
       if (power.id === "resolute-defiance") {
         const shield = actor.items.get(config.targetId);
-        if (!shield) throw Error("Выбранный щит больше недоступен.");
+        if (!shield) throw Error(t("Error.ShieldMissing"));
         await grantShieldHP(shield, effect);
       }
     }
@@ -178,10 +179,10 @@ async function applySelection(actor, {power, config}, corruption) {
 }
 
 export async function use(actor, item, {reserved = false} = {}) {
-  if (!actor?.isOwner) throw Error("Нужны права владельца персонажа.");
+  if (!actor?.isOwner) throw Error(t("Error.Owner"));
   const route = flag(item).action;
   if (!["manifest", "corruption"].includes(route)) return;
-  if (busy.has(actor.uuid)) { ui.notifications.info("Выбор эссенции уже открыт."); return; }
+  if (busy.has(actor.uuid)) { ui.notifications.info(t("Message.DialogOpen")); return; }
   const corruption = route === "corruption";
   const remaining = corruption ? null : (item.system.frequency?.value ?? 1) + (reserved ? 1 : 0);
   busy.add(actor.uuid);
@@ -192,7 +193,7 @@ export async function use(actor, item, {reserved = false} = {}) {
       consume: (value) => item.update({"system.frequency.value": value}, {soulforger: true}),
       rollback: async ({effect}) => {await cleanup(actor, effect.id); if (actor.items.has(effect.id)) await effect.delete();}
     });
-    if (result.status === "exhausted") ui.notifications.warn("Форма эссенции уже использована. Лимит восстановится при ежедневной подготовке.");
+    if (result.status === "exhausted") ui.notifications.warn(t("Message.Exhausted"));
     if (reserved && result.status !== "applied") await item.update({"system.frequency.value": remaining}, {soulforger: true});
     if (result.status !== "applied") return;
     const {power, config} = result.selection;
@@ -216,16 +217,16 @@ async function card(actor, text, buttons = [], extraFlags = {}) {
 }
 async function reportEffect(actor, effect) {
   const data = flag(effect), power = powerById(data.power);
-  const buttons = [cardButton("dismiss", data.kind === "corruption" ? "Убрать изъян" : "Завершить форму эссенции", {effect: effect.uuid})];
-  if (data.kind === "essence" && power.id === "deep-seated-fear") buttons.push(cardButton("demoralize", "Деморализовать при проявлении", {effect: effect.uuid}));
-  if (data.kind === "essence" && power.id === "reflecting-spirit") buttons.push(cardButton("reflect", "Реакция: отразить промахнувшийся снаряд", {effect: effect.uuid}));
-  if (data.kind === "corruption" && power.id === "resolute-defiance") buttons.push(cardButton("shield-check", "Проверка изъяна щита — КС 5", {effect: effect.uuid}));
+  const buttons = [cardButton("dismiss", data.kind === "corruption" ? t("Button.RemoveFlaw") : t("Button.EndEssence"), {effect: effect.uuid})];
+  if (data.kind === "essence" && power.id === "deep-seated-fear") buttons.push(cardButton("demoralize", t("Button.Demoralize"), {effect: effect.uuid}));
+  if (data.kind === "essence" && power.id === "reflecting-spirit") buttons.push(cardButton("reflect", t("Button.Reflect"), {effect: effect.uuid}));
+  if (data.kind === "corruption" && power.id === "resolute-defiance") buttons.push(cardButton("shield-check", t("Button.ShieldCheck"), {effect: effect.uuid}));
   let text = `<p><strong>${escapeHTML(effect.name)}</strong></p>${effect.system.description.value}`;
-  if (data.kind === "essence") text += "<p><small>Длительность: 1 минута. Эффект можно завершить кнопкой ниже.</small></p>";
+  if (data.kind === "essence") text += t("Chat.Duration");
   if (data.kind === "essence" && SPELLS[power.id] && actorLevel(actor) >= (SPELLS[power.id].minLevel ?? 1)) {
-    text += "<p>Временное врождённое заклинание с одним использованием добавлено в раздел «Заклинания».</p>";
+    text += t("Chat.InnateSpell");
   }
-  if (data.kind === "essence" && power.id === "resolute-defiance") text += `<p>Текущие и максимальные ОЗ выбранного щита увеличены на ${data.config.level + 2} на время эссенции.</p>`;
+  if (data.kind === "essence" && power.id === "resolute-defiance") text += t("Chat.ShieldHP", {value: data.config.level + 2});
   await card(actor, text, buttons);
 }
 
@@ -244,19 +245,30 @@ function installSheet(app, html) {
   }, true);
 }
 
-async function provision() {
+export async function provision() {
   if (!game.user.isGM) return;
   const activeGM = game.users.activeGM ?? game.users.find((u) => u.active && u.isGM);
   if (activeGM?.id !== game.user.id) return;
   let folder = game.folders.find((f) => f.type === "Item" && f.getFlag(MODULE, "assets"));
-  if (!folder) folder = await Folder.create({name: "Soulforger — форма эссенции", type: "Item", color: "#684a91", flags: {[MODULE]: {assets: true}}});
+  if (!folder) folder = await Folder.create({name: t("Folder.Name"), type: "Item", color: "#ffd500", flags: {[MODULE]: {assets: true}}});
+  else {
+    const changes = {};
+    if (["en", "ru"].some((locale) => folder.name === translate(locale, "Folder.Name")) && folder.name !== t("Folder.Name"))
+      changes.name = t("Folder.Name");
+    if (String(folder.color).toLowerCase() === "#684a91") changes.color = "#ffd500";
+    if (Object.keys(changes).length) await folder.update(changes);
+  }
   for (const source of itemTemplates()) {
     const existing = game.items.get(source._id);
-    if (existing && !flag(existing).asset) throw Error(`ID ${source._id} уже занят чужим предметом. Установка остановлена без перезаписи.`);
+    if (existing && !flag(existing).asset) throw Error(t("Error.IDConflict", {id: source._id}));
     if (!existing) await Item.create({...source, folder: folder.id}, {keepId: true});
-    else if (flag(existing).version !== VERSION) await existing.update({img: source.img, [`flags.${MODULE}.version`]: VERSION});
+    else {
+      const text = moduleTextPatch(existing);
+      if (flag(existing).version !== VERSION || existing.img !== source.img || Object.keys(text).length)
+        await existing.update({...text, img: source.img, [`flags.${MODULE}.version`]: VERSION});
+    }
   }
-  ui.notifications.info("Soulforger: способность «Проявить форму эссенции» доступна в папке предметов «Soulforger — форма эссенции».");
+  ui.notifications.info(t("Message.Provisioned"));
 }
 
 function allActors() {
@@ -290,6 +302,86 @@ async function migrateIcons() {
   for (const actor of allActors().filter(updater)) await migrateActorIcons(actor);
 }
 
+function moduleTextSource(item) {
+  const data = flag(item);
+  if (data.action || data.route) return itemTemplates().find((source) =>
+    data.action ? flag(source).action === data.action : flag(source).route === data.route);
+  if (["essence", "corruption"].includes(data.kind) && powerById(data.power))
+    return makeEffect(powerById(data.power), data.config, {corruption: data.kind === "corruption"});
+  if (data.kind === "stasis") {
+    const critical = data.critical ?? item.system.rules?.some((r) => r.key === "GrantItem" && r.uuid?.endsWith("eIcWbB5o3pP6OIMe"));
+    return stasisEffect(critical, 0, null);
+  }
+  if (["temporary-spellcasting", "temporary-spell"].includes(data.kind)) {
+    const power = powerById(flag(item.actor?.items.get(data.effectId)).power);
+    if (!power) return null;
+    return {name: data.kind === "temporary-spellcasting" ? t("Item.EssenceEntry", {power: powerName(power)}) : SPELLS[power.id]?.name};
+  }
+  return null;
+}
+
+/** Change only generated text. Custom names/descriptions and all mechanics remain intact. */
+export function moduleTextPatch(item) {
+  const source = moduleTextSource(item);
+  if (!source) return {};
+  const defaults = ["en", "ru"].map((locale) => withLanguage(locale, () => moduleTextSource(item)));
+  const patch = {};
+  if (source.name && item.name !== source.name && defaults.some((s) => s?.name === item.name)) patch.name = source.name;
+  for (const path of ["system.description.value", "system.selfEffect.name"]) {
+    const next = fu().getProperty(source, path), current = fu().getProperty(item, path);
+    if (typeof next === "string" && next !== current && defaults.some((s) => fu().getProperty(s, path) === current)) patch[path] = next;
+  }
+  const rules = item._source?.system.rules ?? item.system?.rules;
+  if (Array.isArray(rules) && source.system?.rules) {
+    let changed = false;
+    const localized = rules.map((rule, index) => {
+      const next = source.system.rules[index];
+      if (rule.key !== next?.key) return rule;
+      const result = {...rule};
+      for (const field of ["text", "label"]) {
+        if (typeof next[field] === "string" && next[field] !== rule[field] &&
+            defaults.some((s) => s?.system?.rules?.[index]?.[field] === rule[field])) {
+          result[field] = next[field]; changed = true;
+        }
+      }
+      return result;
+    });
+    if (changed) patch["system.rules"] = localized;
+  }
+  // PF2e derives this modifier slug from its localized label. Keep an active
+  // Deep-Seated Fear effect matched to the system's current language.
+  const data = flag(item), previousSlug = data.config?.unintelligibleSlug;
+  if (data.kind === "essence" && data.power === "deep-seated-fear" && previousSlug &&
+      typeof game?.pf2e?.system?.sluggify === "function") {
+    const key = "PF2E.Actions.Demoralize.Unintelligible", label = game.i18n.localize(key);
+    if (label !== key) {
+      const nextSlug = game.pf2e.system.sluggify(label);
+      const ruleIndex = rules?.findIndex((r) => r.key === "AdjustModifier" && r.slug === previousSlug &&
+        r.predicate?.includes("soulforger:target-perceives-essence"));
+      if (nextSlug !== previousSlug && ruleIndex >= 0) {
+        const updated = structuredClone(patch["system.rules"] ?? rules);
+        updated[ruleIndex].slug = nextSlug;
+        patch["system.rules"] = updated;
+        patch[`flags.${MODULE}.config.unintelligibleSlug`] = nextSlug;
+      }
+    }
+  }
+  if (flag(item).language !== language()) patch[`flags.${MODULE}.language`] = language();
+  return patch;
+}
+
+export async function migrateActorTexts(actor) {
+  const updates = itemsOf(actor).flatMap((item) => {
+    const patch = moduleTextPatch(item);
+    return Object.keys(patch).length ? [{_id: item.id, ...patch}] : [];
+  });
+  if (updates.length) await actor.updateEmbeddedDocuments("Item", updates, {soulforger: true});
+}
+
+async function migrateTexts() {
+  for (const actor of allActors().filter(updater)) await migrateActorTexts(actor);
+}
+
 export async function migrateShieldHP(actor) {
   for (const effect of effectsOf(actor, "essence", "resolute-defiance")) {
     const config = flag(effect).config;
@@ -306,11 +398,8 @@ export async function migrateShieldHP(actor) {
     await grantShieldHP(shield, effect, {max, value: legacy?.source === effect.id ? legacy.value : max});
   }
   for (const effect of effectsOf(actor, "corruption", "resolute-defiance")) {
-    const power = powerById("resolute-defiance");
-    const description = makeEffect(power, flag(effect).config, {corruption: true}).system.description.value;
-    if (effect.system.description.value !== description) await effect.update({"system.description.value": description,
-      "system.rules": effect.system.rules.map((r) => r.key === "Note" && r.selector === "damage-received"
-        ? {...r, text: escapeHTML(power.flaw)} : r)});
+    const text = moduleTextPatch(effect);
+    if (Object.keys(text).length) await effect.update(text);
   }
 }
 
@@ -446,43 +535,43 @@ function isDemoralize(context) {return context.action === "demoralize" || contex
 async function rollDemoralize(actor, target = null) {
   if (!target) {
     const targets = [...game.user.targets];
-    if (!targets.length) {ui.notifications.warn("Выдели цель, которую персонаж может Деморализовать."); return;}
+    if (!targets.length) {ui.notifications.warn(t("Message.DemoralizeTarget")); return;}
     target = targets[0];
   }
   const action = game.pf2e.actions.get("demoralize");
-  if (!action) throw Error("Не найдено системное действие Demoralize.");
+  if (!action) throw Error(t("Error.DemoralizeMissing"));
   return action.use({actors: [actor], target});
 }
 async function forcedStrike(actor, message, target) {
   const context = contextOf(message), weapon = message.item;
   let strike = actor.system.actions?.find((s) => s.item?.id === weapon?.id);
   if (context.altUsage === "thrown") strike = strike?.altUsages?.find((s) => s.item?.isThrown) ?? strike;
-  if (!strike) throw Error("Не найден Удар для перенаправления промаха.");
+  if (!strike) throw Error(t("Error.StrikeMissing"));
   const map = Math.clamp(Number(context.mapIncreases) || 0, 0, 2);
   await strike.variants[map].roll({target, consumeAmmo: false, options: ["soulforger:bounding-reroll"]});
 }
 async function pain(actor, type) {
   const token = actorToken(actor)?.document;
-  if (!token) {ui.notifications.warn("Для применения изъяна Планарной боли размести токен персонажа на сцене."); return;}
-  if (!(type in DAMAGE_TYPES)) throw Error("Для изъяна Планарной боли не выбран корректный тип урона.");
+  if (!token) {ui.notifications.warn(t("Message.PainToken")); return;}
+  if (!(type in DAMAGE_TYPES)) throw Error(t("Error.PainType"));
   const DamageRoll = CONFIG.Dice.rolls.find((R) => R.name === "DamageRoll");
-  if (!DamageRoll) throw Error("Не найден класс DamageRoll PF2e.");
+  if (!DamageRoll) throw Error(t("Error.DamageRoll"));
   const roll = await new DamageRoll(`{2[${type}]}`).evaluate();
   const context = actor.getContextualClone([]);
   const isAffectedBy = context.isAffectedBy.bind(context);
   context.isAffectedBy = (damageType) => damageType === type || isAffectedBy(damageType);
   const flaw = effectsOf(actor, "corruption", "planar-pain")[0];
   await context.applyDamage({damage: roll, token, item: flaw});
-  await card(actor, `<p>Изъян Планарной боли: базовые <strong>2 ${escapeHTML(DAMAGE_TYPES[type])}</strong>. Совместимость типа с живым/неживым существом обойдена; сопротивления и слабости обрабатывает PF2e.</p>`);
+  await card(actor, t("Chat.Pain", {type: escapeHTML(DAMAGE_TYPES[type])}));
 }
 export async function shieldCheck(actor, shield = currentShield(actor)) {
   if (!shield) return true;
-  const label = "Изъян Решительного неповиновения — чистая проверка КС 5";
+  const label = t("Check.Shield");
   const roll = await game.pf2e.Check.roll(new game.pf2e.CheckModifier(label, {modifiers: []}), {
     actor, item: effectsOf(actor, "corruption", "resolute-defiance")[0] ?? null,
     type: "flat-check", dc: {value: 5}, skipDialog: true
   });
-  if (!roll) throw Error("Проверка изъяна щита отменена. Урон ещё не применён.");
+  if (!roll) throw Error(t("Error.CheckCancelled"));
   if (roll.total >= 5) return true;
   const raisedEffects = itemsOf(actor).filter((i) => i.type === "effect" &&
     (["effect-raise-a-shield", "raise-a-shield"].includes(i.slug ?? i.system.slug) ||
@@ -490,7 +579,7 @@ export async function shieldCheck(actor, shield = currentShield(actor)) {
       ((i.slug ?? i.system.slug) === "effect-cover" && i.system.traits?.otherTags?.includes("tower-shield"))));
   if (raisedEffects.length) await actor.deleteEmbeddedDocuments("Item", raisedEffects.map((i) => i.id));
   await shield.update({"system.equipped.carryType": "dropped", "system.equipped.handsHeld": 0});
-  await card(actor, `<p>Проверка провалена: ${escapeHTML(shield.name)} выпал из рук. Щит больше не поднят; блок не снижает урон.</p>`);
+  await card(actor, t("Chat.ShieldDropped", {name: escapeHTML(shield.name)}));
   return false;
 }
 
@@ -507,8 +596,8 @@ async function applyStasisInner(message) {
   if (!target?.actor) return;
   if (!target.actor.isOwner) {
     if (game.users.activeGM) {game.socket.emit(`module.${MODULE}`, {type: "stasis", messageId: message.id}); return;}
-    await card(actor, "<p>Притяжение стазиса: урон/состояние цели ожидает применения владельцем цели или мастером.</p>",
-      [cardButton("stasis", "Применить Притяжение стазиса к цели", {message: message.id})]);
+    await card(actor, t("Chat.StasisPending"),
+      [cardButton("stasis", t("Button.Stasis"), {message: message.id})]);
     return;
   }
   if (itemsOf(target.actor).some((i) => flag(i).sourceMessage === message.id)) return;
@@ -529,7 +618,7 @@ export async function onChat(message, _options, userId) {
       const target = await resolveToken(context.target?.token);
       const ally = nearestAlly(actor, target);
       if (ally) await forcedStrike(actor, message, ally);
-      else await card(actor, "<p>Изъян Связывающего духа: на текущей сцене не найден ближайший союзник. Мастер определяет цель, если она вне сцены.</p>");
+      else await card(actor, t("Chat.NoAlly"));
     }
     if (weapon && effectsOf(actor, "essence", "pull-of-stasis").length) await applyStasis(message);
   }
@@ -574,18 +663,18 @@ async function reflect(actor, effect) {
   const shields = eligibleItems(itemsOf(actor), "shield");
   let shield = isShield(selected ?? {}) ? selected : null;
   if (!shield && shields.length) {
-    const id = await select("Щит для расчёта отражения", shields.map((s) => ({value: s.id, label: s.name})));
+    const id = await select(t("Dialog.ReflectionShield"), shields.map((s) => ({value: s.id, label: s.name})));
     if (!id) return; shield = actor.items.get(id);
   }
-  if (!shield) {ui.notifications.warn("В правилах отражение рассчитывается от Твёрдости щита. Без щита величину должен определить мастер."); return;}
-  const type = await select("Тип урона промахнувшегося снаряда", ["bludgeoning", "piercing", "slashing"].map((value, i) =>
-    ({value, label: ["Дробящий", "Колющий", "Рубящий"][i]})));
+  if (!shield) {ui.notifications.warn(t("Message.ReflectionShield")); return;}
+  const type = await select(t("Dialog.ReflectionType"), ["bludgeoning", "piercing", "slashing"].map((value, i) =>
+    ({value, label: t(`Damage.${value}`)})));
   if (!type) return;
   const value = Math.floor(Number(shield.system.hardness) / 2);
   const DamageRoll = CONFIG.Dice.rolls.find((R) => R.name === "DamageRoll");
-  if (!DamageRoll) throw Error("Не найден класс DamageRoll PF2e.");
+  if (!DamageRoll) throw Error(t("Error.DamageRoll"));
   const roll = await new DamageRoll(`{${value}[${type}]}`).evaluate();
-  await roll.toMessage({speaker: ChatMessage.getSpeaker({actor}), flavor: "Отражающий дух — реакция: отражённый снаряд"});
+  await roll.toMessage({speaker: ChatMessage.getSpeaker({actor}), flavor: t("Check.Reflection")});
 }
 async function clickCard(event) {
   const button = event.target.closest?.("[data-soulforger-action]");
@@ -601,7 +690,7 @@ async function clickCard(event) {
     }
     const effect = await fromUuid(button.dataset.effect);
     const actor = effect?.actor;
-    if (!actor?.isOwner || !effectActive(effect)) {ui.notifications.warn("Эффект завершён или нет прав владельца."); return;}
+    if (!actor?.isOwner || !effectActive(effect)) {ui.notifications.warn(t("Message.EffectUnavailable")); return;}
     if (action === "dismiss") {await cleanup(actor, effect.id); await effect.delete();}
     else if (action === "demoralize") {
       if (flag(effect).demoralizeUsed) return;
@@ -645,7 +734,7 @@ if (typeof Hooks !== "undefined") {
   Hooks.once("ready", () => {
     if (game.system.id !== "pf2e") return;
     installDamageCapture(CONFIG.Actor.documentClass);
-    run(provision().then(migrateIcons).then(sweep).then(migrateShields));
+    run(provision().then(migrateIcons).then(migrateTexts).then(sweep).then(migrateShields));
     document.addEventListener("click", (event) => run(clickCard(event)));
     game.socket.on(`module.${MODULE}`, (data) => {
       if (!["stasis", "pain"].includes(data?.type) || !game.user.isGM || game.users.activeGM?.id !== game.user.id) return;

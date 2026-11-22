@@ -1,67 +1,101 @@
 /** Pure data and rule builders. Does not depend on Foundry globals. */
+import {t, language, translate} from "./i18n.mjs";
 import {ESSENCE_ICON, CORRUPTION_ICON, STASIS_ICON, IMMOBILIZED_ICON, powerIcon} from "./icons.mjs";
 export const MODULE = "soulforger-essence";
-export const VERSION = "1.2.2";
+export const VERSION = "1.3.1";
 export const ICON = ESSENCE_ICON;
 export const IDS = Object.freeze({
   feat: "SEssenceFeat0001", flaw: "SEssenceFlaw0001",
   essenceCarrier: "SEssenceGate0001", flawCarrier: "SCorruptGate0001"
 });
 export const DAMAGE_TYPES = Object.freeze({
-  acid: "Кислота", cold: "Холод", electricity: "Электричество", fire: "Огонь",
-  sonic: "Звук", spirit: "Духовный / Spirit", vitality: "Жизненная сила / Vitality", void: "Пустота / Void"
+  get acid() {return t("Damage.acid");},
+  get cold() {return t("Damage.cold");},
+  get electricity() {return t("Damage.electricity");},
+  get fire() {return t("Damage.fire");},
+  get sonic() {return t("Damage.sonic");},
+  get spirit() {return t("Damage.spirit");},
+  get vitality() {return t("Damage.vitality");},
+  get void() {return t("Damage.void");}
 });
 export const CONDITIONS = ["clumsy", "drained", "enfeebled", "frightened", "sickened", "stupefied"];
 export const SPELLS = Object.freeze({
-  "harmful-malice": {uuid: "Compendium.pf2e.spells-srd.Item.wdA52JJnsuQWeyqz", name: "Нанесение ран / Harm"},
-  "healing-grace": {uuid: "Compendium.pf2e.spells-srd.Item.rfZpqmj0AIIdkVIs", name: "Исцеление / Heal"},
-  "magical-resilience": {uuid: "Compendium.pf2e.spells-srd.Item.9HpwDN4MYQJnW0LG", name: "Рассеять магию / Dispel Magic", minLevel: 5}
+  "harmful-malice": {uuid: "Compendium.pf2e.spells-srd.Item.wdA52JJnsuQWeyqz", get name() {return t("Spells.harmful-malice");}},
+  "healing-grace": {uuid: "Compendium.pf2e.spells-srd.Item.rfZpqmj0AIIdkVIs", get name() {return t("Spells.healing-grace");}},
+  "magical-resilience": {uuid: "Compendium.pf2e.spells-srd.Item.9HpwDN4MYQJnW0LG", get name() {return t("Spells.magical-resilience");}, minLevel: 5}
 });
 export const POWERS = Object.freeze([
-  {id: "adaptable-persona", ru: "Адаптирующая личность", en: "Adaptable Persona", equipment: "armor",
-    benefit: "Скорость карабканья или плавания равна наземной. С 8-го уровня можно выбрать полёт.",
-    flaw: "Штраф −10 футов ко всем Скоростям."},
-  {id: "bounding-spirit", ru: "Связывающий дух", en: "Bounding Spirit", equipment: "melee",
-    benefit: "Выбранное оружие ближнего боя получает метательное 30 футов и возвращающуюся руну сверх лимита рун.",
-    flaw: "Промах дистанционным или метательным оружием требует нового Удара по союзнику, ближайшему к исходной цели. Прежний MAP; этот Удар не увеличивает MAP."},
-  {id: "deep-seated-fear", ru: "Укоренившийся страх", en: "Deep-Seated Fear", equipment: null,
-    benefit: "Статусный бонус +2 к Запугиванию. Нет языкового штрафа к Demoralize против воспринимающей эссенцию цели. При проявлении можно Деморализовать как часть действия.",
-    flaw: "Попытка Деморализовать врага дополнительно затрагивает ближайшего к тебе союзника."},
-  {id: "determined-toughness", ru: "Решительная выносливость", en: "Determined Toughness", equipment: null,
-    benefit: "Статусные штрафы от clumsy, drained, enfeebled, frightened, sickened и stupefied ослаблены на 1. Значения состояний и прочие последствия сохраняются.",
-    flaw: "Значение вызывающего статусный штраф состояния из перечисленных увеличивается на 1."},
-  {id: "harmful-malice", ru: "Вредящая злость", en: "Harmful Malice", equipment: null,
-    benefit: "Все твои Удары наносят дополнительные 1d4 void. Доступно одно врождённое Harm ранга ceil(уровень / 2).",
-    flaw: "Любой наносимый тобой урон уменьшается на floor(уровень / 2)."},
-  {id: "heroic-heart", ru: "Героическое сердце", en: "Heroic Heart", equipment: null,
-    benefit: "Статусный бонус +1 к атакам, Восприятию, спасброскам и проверкам навыков.",
-    flaw: "Статусный штраф −1 к атакам."},
-  {id: "healing-grace", ru: "Исцеляющая благодать", en: "Healing Grace", equipment: null,
-    benefit: "Быстрое исцеление floor(уровень / 2). Доступно одно врождённое Heal ранга ceil(уровень / 2).",
-    flaw: "Получаемое исцеление и исцеление, предоставляемое заклинанием, уменьшаются на floor(уровень / 2)."},
-  {id: "magical-resilience", ru: "Магическая стойкость", en: "Magical Resilience", equipment: "armor-shield",
-    benefit: "Статусный бонус +2 к КБ и спасброскам против заклинаний. С 5-го уровня — одно врождённое Dispel Magic ранга ceil(уровень / 2) − 1.",
-    flaw: "Статусный штраф −1 к КБ и спасброскам против заклинаний."},
-  {id: "planar-bond", ru: "Планарная связь", en: "Planar Bond", equipment: "armor-shield",
-    benefit: "Сопротивление выбранному типу урона, равное уровню + 2.",
-    flaw: "Слабость 1 ко всему урону."},
-  {id: "planar-pain", ru: "Планарная боль", en: "Planar Pain", equipment: "weapon",
-    benefit: "Физический урон выбранного оружия заменён выбранным типом; статусный бонус +2 к урону этого оружия.",
-    flaw: "Нанося урон оружием или безоружной атакой, получаешь 2 урона последнего выбранного типа, даже если он обычно тебе не вредит."},
-  {id: "pull-of-stasis", ru: "Притяжение стазиса", en: "Pull of Stasis", equipment: "weapon",
-    benefit: "Попадание выбранным оружием: −10 футов ко всем Скоростям цели на 1 раунд. Критическое попадание: immobilized на 1 раунд вместо штрафа.",
-    flaw: "Штраф −10 футов ко всем Скоростям."},
-  {id: "reflecting-spirit", ru: "Отражающий дух", en: "Reflecting Spirit", equipment: "armor-shield",
-    benefit: "Статусный бонус +2 к КБ против физических дистанционных атак. Реакция после промаха: отражённый урон того же типа, равный половине Твёрдости твоего щита.",
-    flaw: "Слабость 5 к физическим дистанционным атакам."},
-  {id: "resolute-defiance", ru: "Решительное неповиновение", en: "Resolute Defiance", equipment: "shield",
-    benefit: "Выбранный щит получает +2 к Твёрдости и прибавку к текущим и максимальным ОЗ, равную уровню + 2, на время эссенции. Урон сначала расходует добавленные ОЗ. Предоставляется Shield Block, если его нет.",
-    flaw: "При блокировании урона автоматически выполни чистую проверку КС 5 до применения блока. При провале щит падает, эффект «Поднять щит» снимается, урон применяется без снижения от блока. Получение урона с поднятым щитом также вызывает проверку."}
+  {id: "adaptable-persona", equipment: "armor",
+    get ru() {return translate("ru", "Powers.adaptable-persona.Name");},
+    get en() {return translate("en", "Powers.adaptable-persona.Name");},
+    get benefit() {return t("Powers.adaptable-persona.Benefit");},
+    get flaw() {return t("Powers.adaptable-persona.Flaw");}},
+  {id: "bounding-spirit", equipment: "melee",
+    get ru() {return translate("ru", "Powers.bounding-spirit.Name");},
+    get en() {return translate("en", "Powers.bounding-spirit.Name");},
+    get benefit() {return t("Powers.bounding-spirit.Benefit");},
+    get flaw() {return t("Powers.bounding-spirit.Flaw");}},
+  {id: "deep-seated-fear", equipment: null,
+    get ru() {return translate("ru", "Powers.deep-seated-fear.Name");},
+    get en() {return translate("en", "Powers.deep-seated-fear.Name");},
+    get benefit() {return t("Powers.deep-seated-fear.Benefit");},
+    get flaw() {return t("Powers.deep-seated-fear.Flaw");}},
+  {id: "determined-toughness", equipment: null,
+    get ru() {return translate("ru", "Powers.determined-toughness.Name");},
+    get en() {return translate("en", "Powers.determined-toughness.Name");},
+    get benefit() {return t("Powers.determined-toughness.Benefit");},
+    get flaw() {return t("Powers.determined-toughness.Flaw");}},
+  {id: "harmful-malice", equipment: null,
+    get ru() {return translate("ru", "Powers.harmful-malice.Name");},
+    get en() {return translate("en", "Powers.harmful-malice.Name");},
+    get benefit() {return t("Powers.harmful-malice.Benefit");},
+    get flaw() {return t("Powers.harmful-malice.Flaw");}},
+  {id: "heroic-heart", equipment: null,
+    get ru() {return translate("ru", "Powers.heroic-heart.Name");},
+    get en() {return translate("en", "Powers.heroic-heart.Name");},
+    get benefit() {return t("Powers.heroic-heart.Benefit");},
+    get flaw() {return t("Powers.heroic-heart.Flaw");}},
+  {id: "healing-grace", equipment: null,
+    get ru() {return translate("ru", "Powers.healing-grace.Name");},
+    get en() {return translate("en", "Powers.healing-grace.Name");},
+    get benefit() {return t("Powers.healing-grace.Benefit");},
+    get flaw() {return t("Powers.healing-grace.Flaw");}},
+  {id: "magical-resilience", equipment: "armor-shield",
+    get ru() {return translate("ru", "Powers.magical-resilience.Name");},
+    get en() {return translate("en", "Powers.magical-resilience.Name");},
+    get benefit() {return t("Powers.magical-resilience.Benefit");},
+    get flaw() {return t("Powers.magical-resilience.Flaw");}},
+  {id: "planar-bond", equipment: "armor-shield",
+    get ru() {return translate("ru", "Powers.planar-bond.Name");},
+    get en() {return translate("en", "Powers.planar-bond.Name");},
+    get benefit() {return t("Powers.planar-bond.Benefit");},
+    get flaw() {return t("Powers.planar-bond.Flaw");}},
+  {id: "planar-pain", equipment: "weapon",
+    get ru() {return translate("ru", "Powers.planar-pain.Name");},
+    get en() {return translate("en", "Powers.planar-pain.Name");},
+    get benefit() {return t("Powers.planar-pain.Benefit");},
+    get flaw() {return t("Powers.planar-pain.Flaw");}},
+  {id: "pull-of-stasis", equipment: "weapon",
+    get ru() {return translate("ru", "Powers.pull-of-stasis.Name");},
+    get en() {return translate("en", "Powers.pull-of-stasis.Name");},
+    get benefit() {return t("Powers.pull-of-stasis.Benefit");},
+    get flaw() {return t("Powers.pull-of-stasis.Flaw");}},
+  {id: "reflecting-spirit", equipment: "armor-shield",
+    get ru() {return translate("ru", "Powers.reflecting-spirit.Name");},
+    get en() {return translate("en", "Powers.reflecting-spirit.Name");},
+    get benefit() {return t("Powers.reflecting-spirit.Benefit");},
+    get flaw() {return t("Powers.reflecting-spirit.Flaw");}},
+  {id: "resolute-defiance", equipment: "shield",
+    get ru() {return translate("ru", "Powers.resolute-defiance.Name");},
+    get en() {return translate("en", "Powers.resolute-defiance.Name");},
+    get benefit() {return t("Powers.resolute-defiance.Benefit");},
+    get flaw() {return t("Powers.resolute-defiance.Flaw");}}
 ]);
 export const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g,
   (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[c]);
 export const powerById = (id) => POWERS.find((p) => p.id === id);
-export const powerLabel = (p) => `${p.ru} / ${p.en}`;
+export const powerName = (p) => p.id ? t(`Powers.${p.id}.Name`) : (language() === "ru" ? p.ru ?? p.en : p.en ?? p.ru);
+export const powerLabel = (p) => language() === "ru" ? `${powerName(p)} / ${p.en}` : powerName(p);
 export const actorLevel = (actor) => Math.max(1, Number(actor.level ?? actor.system?.details?.level?.value) || 1);
 export const isShield = (item) => item.type === "shield" || (item.type === "armor" && item.system?.category === "shield");
 export function eligibleItems(items, equipment) {
@@ -100,10 +134,10 @@ export function essenceRules(power, config = {}) {
     case "deep-seated-fear":
       rules.push(fm("intimidation", 2, "status"),
         {key: "RollOption", domain: "intimidation", option: "soulforger:target-perceives-essence", toggleable: true,
-          value: true, label: "Цель воспринимает форму эссенции"},
+          value: true, label: t("Rule.TargetPerceives")},
         {key: "AdjustModifier", selectors: ["intimidation"], slug: config.unintelligibleSlug ?? "unintelligible", suppress: true,
           predicate: ["soulforger:target-perceives-essence"]},
-        note("intimidation", "Нет языкового штрафа, если цель воспринимает эссенцию. Остальные условия Demoralize сохраняются.")); break;
+        note("intimidation", t("Rule.Language"))); break;
     case "determined-toughness":
       rules.push(...CONDITIONS.map((slug) => ({key: "AdjustModifier", selectors: ["all"], slug, mode: "add", value: 1}))); break;
     case "harmful-malice":
@@ -123,7 +157,7 @@ export function essenceRules(power, config = {}) {
         fm(`${id}-damage`, 2, "status")); break;
     case "pull-of-stasis":
       rules.push({key: "Note", selector: `${id}-attack`, outcome: ["success", "criticalSuccess"],
-        text: "Притяжение стазиса: попадание — −10 футов ко всем Скоростям на 1 раунд; критическое попадание — immobilized на 1 раунд. Применить эффект можно кнопкой в карточке срабатывания."}); break;
+        text: t("Rule.Stasis")}); break;
     case "reflecting-spirit":
       rules.push(fm("ac", 2, "status", physicalRanged), note("ac", power.benefit)); break;
     case "resolute-defiance":
@@ -148,7 +182,7 @@ export function corruptionRules(power) {
     case "planar-bond": rules.push({key: "Weakness", type: ["all-damage"], value: 1}); break;
     case "reflecting-spirit":
       rules.push({key: "Weakness", type: ["custom"], value: 5,
-        definition: ["damage:category:physical", "item:ranged"], label: "Физические дистанционные атаки"}); break;
+        definition: ["damage:category:physical", "item:ranged"], label: t("Rule.PhysicalRanged")}); break;
   }
   rules.push(note(power.id === "deep-seated-fear" ? "intimidation" :
     power.id === "resolute-defiance" ? "damage-received" : "attack-roll", escapeHTML(power.flaw)));
@@ -156,11 +190,11 @@ export function corruptionRules(power) {
 }
 export function makeEffect(power, config = {}, {corruption = false, worldTime = 0, initiative = null} = {}) {
   const target = config.targetName ? ` — ${config.targetName}` : "";
-  const title = `${corruption ? "Изъян порока" : "Форма эссенции"}: ${powerLabel(power)}${target}`;
+  const title = `${corruption ? t("Effect.Corruption") : t("Effect.Essence")}: ${powerLabel(power)}${target}`;
   const text = corruption ? power.flaw : power.benefit;
-  const details = [config.targetName && `Предмет: ${config.targetName}`,
-    config.damageType && `Тип урона: ${DAMAGE_TYPES[config.damageType]}`,
-    config.movement && `Скорость: ${{climb: "карабканье", swim: "плавание", fly: "полёт"}[config.movement]}`].filter(Boolean);
+  const details = [config.targetName && t("Effect.Item", {name: config.targetName}),
+    config.damageType && t("Effect.Damage", {type: DAMAGE_TYPES[config.damageType]}),
+    config.movement && t("Effect.Speed", {speed: t(`MovementDetail.${config.movement}`)})].filter(Boolean);
   const effect = {
     name: title, type: "effect", img: powerIcon(power.id, corruption),
     system: {
@@ -176,18 +210,18 @@ export function makeEffect(power, config = {}, {corruption = false, worldTime = 
         power.id === "healing-grace" ? ["divine", "healing", "vitality"] :
         power.id === "heroic-heart" ? ["divine", "mental"] : ["divine"]}
     },
-    flags: {[MODULE]: {kind: corruption ? "corruption" : "essence", power: power.id, config, version: VERSION,
+    flags: {[MODULE]: {kind: corruption ? "corruption" : "essence", power: power.id, config, version: VERSION, language: language(),
       ...(corruption ? {} : {expiresAt: worldTime + 60})}}
   };
   return effect;
 }
 export function stasisEffect(critical, worldTime, initiative) {
-  return {name: critical ? "Притяжение стазиса: обездвижен" : "Притяжение стазиса: замедление", type: "effect", img: critical ? IMMOBILIZED_ICON : STASIS_ICON,
-    system: {slug: "soulforger-stasis-target", description: {value: `<p>${critical ? "Обездвижен" : "−10 футов ко всем Скоростям"} на 1 раунд.</p>`},
+  return {name: t(critical ? "Stasis.ImmobilizedName" : "Stasis.SlowedName"), type: "effect", img: critical ? IMMOBILIZED_ICON : STASIS_ICON,
+    system: {slug: "soulforger-stasis-target", description: {value: t(critical ? "Stasis.ImmobilizedDescription" : "Stasis.SlowedDescription")},
       duration: {value: 1, unit: "rounds", expiry: "turn-start", sustained: false}, start: {value: worldTime, initiative},
       rules: critical ? [{key: "GrantItem", uuid: "Compendium.pf2e.conditionitems.Item.eIcWbB5o3pP6OIMe",
         inMemoryOnly: true}] : allSpeeds(-10), traits: {value: ["divine"]}},
-    flags: {[MODULE]: {kind: "stasis", critical, version: VERSION}}};
+    flags: {[MODULE]: {kind: "stasis", critical, version: VERSION, language: language()}}};
 }
 /** All dialogs complete before mutation. Roll back effects if resource consumption fails. */
 export async function activateTransaction({remaining, choose, apply, consume, rollback}) {
@@ -206,28 +240,28 @@ export async function activateTransaction({remaining, choose, apply, consume, ro
   }
 }
 export function itemTemplates() {
-  const common = {img: ICON, ownership: {default: 2}, effects: [], flags: {[MODULE]: {asset: true, version: VERSION}}};
+  const common = {img: ICON, ownership: {default: 2}, effects: [], flags: {[MODULE]: {asset: true, version: VERSION, language: language()}}};
   const carrier = (id, route) => ({...structuredClone(common), _id: id, img: route === "corruption" ? CORRUPTION_ICON : ESSENCE_ICON,
-    name: `Soulforger: служебный эффект (${route})`, type: "effect",
-    system: {description: {value: "<p>Служебный эффект. При его применении модуль открывает выбор эссенции.</p>"},
+    name: t("Item.HelperName", {route}), type: "effect",
+    system: {description: {value: t("Item.HelperDescription")},
       duration: {value: -1, unit: "unlimited", expiry: null}, rules: [], traits: {value: []}},
-    flags: {[MODULE]: {asset: true, version: VERSION, route}}});
+    flags: {[MODULE]: {asset: true, version: VERSION, language: language(), route}}});
   const base = {actionType: {value: "free"}, actions: {value: null}, traits: {value: ["divine"], rarity: "common"},
     description: {value: ""}, rules: []};
   return [carrier(IDS.essenceCarrier, "manifest"), carrier(IDS.flawCarrier, "corruption"),
-    {...structuredClone(common), _id: IDS.flaw, img: CORRUPTION_ICON, name: "Применить изъян порока", type: "action",
+    {...structuredClone(common), _id: IDS.flaw, img: CORRUPTION_ICON, name: t("Action.Corruption"), type: "action",
       system: {...structuredClone(base), category: null, slug: "soulforger-apply-corruption",
-        description: {value: "<p><strong>Свободное действие.</strong> Нажми «Использовать», выбери изъян силы эссенции. Изъян действует без ограничения времени до удаления эффекта. Дневной лимит формы эссенции не расходуется.</p>"},
-        selfEffect: {name: "Выбрать изъян порока", uuid: `Item.${IDS.flawCarrier}`}},
-      flags: {[MODULE]: {asset: true, version: VERSION, action: "corruption"}}},
-    {...structuredClone(common), _id: IDS.feat, name: "Проявить форму эссенции", type: "feat",
+        description: {value: t("Item.CorruptionDescription")},
+        selfEffect: {name: t("Action.SelectCorruption"), uuid: `Item.${IDS.flawCarrier}`}},
+      flags: {[MODULE]: {asset: true, version: VERSION, language: language(), action: "corruption"}}},
+    {...structuredClone(common), _id: IDS.feat, name: t("Action.Manifest"), type: "feat",
       system: {...structuredClone(base), category: "class", level: {value: 2}, slug: "soulforger-manifest-essence",
         frequency: {max: 1, per: "day"}, prerequisites: {value: []}, maxTakable: 1,
         traits: {value: ["concentrate", "divine", "extradimensional"], rarity: "common"},
-        description: {value: "<p><strong>Свободное действие. Частота:</strong> 1 раз в день.</p><p>Нажми «Использовать», выбери силу эссенции, затем подходящий предмет, если это нужно. Эффект действует 1 минуту. Отмена любого окна сохраняет использование.</p><p>Эта способность также предоставляет свободное действие <strong>«Применить изъян порока»</strong>.</p><p>В этой пользовательской версии силу можно выбирать при каждом использовании; действие имеет запрошенную свободную стоимость.</p>"},
+        description: {value: t("Item.ManifestDescription")},
         rules: [{key: "GrantItem", uuid: `Item.${IDS.flaw}`, flag: "soulforgerCorruption", allowDuplicate: false,
           nestUnderGranter: false, onDeleteActions: {granter: "cascade", grantee: "detach"}}],
-        selfEffect: {name: "Выбрать силу эссенции", uuid: `Item.${IDS.essenceCarrier}`}},
-      flags: {[MODULE]: {asset: true, version: VERSION, action: "manifest"}}}
+        selfEffect: {name: t("Action.SelectEssence"), uuid: `Item.${IDS.essenceCarrier}`}},
+      flags: {[MODULE]: {asset: true, version: VERSION, language: language(), action: "manifest"}}}
   ];
 }

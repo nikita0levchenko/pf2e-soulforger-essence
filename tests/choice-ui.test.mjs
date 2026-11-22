@@ -1,4 +1,5 @@
-import {test} from "node:test";
+import {test, beforeEach} from "node:test";
+beforeEach(() => {globalThis.game = {i18n: {lang: "ru", localize: (key) => key}};});
 import assert from "node:assert/strict";
 import {parseHTML} from "linkedom";
 import {POWERS, MODULE, VERSION, makeEffect} from "../scripts/core.mjs";
@@ -186,3 +187,4 @@ test("labels, values, and description content are HTML escaped", () => {
   const html = renderChoiceContent("Выбор", [{value: 'x" bad="y', label: "<label>", img: 'x" onerror="bad', description}]);
   assert(html.includes("&lt;label&gt;")); assert(!html.includes('src="x" onerror='));
 });
+

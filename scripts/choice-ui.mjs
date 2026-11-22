@@ -1,10 +1,11 @@
+import {t} from "./i18n.mjs";
 import {POWERS, DAMAGE_TYPES, escapeHTML, powerLabel} from "./core.mjs";
 import {powerIcon} from "./icons.mjs";
 
-const equipmentLabels = {
-  armor: "Только доспехи", melee: "Только оружие ближнего боя", weapon: "Оружие",
-  shield: "Только щиты", "armor-shield": "Доспехи или щиты"
-};
+const equipmentLabels = () => ({
+  armor: t("Equipment.armor"), melee: t("Equipment.melee"), weapon: t("Equipment.weapon"),
+  shield: t("Equipment.shield"), "armor-shield": t("Equipment.armor-shield")
+});
 const boundRoots = new WeakMap();
 let controlSerial = 0;
 
@@ -12,22 +13,22 @@ let controlSerial = 0;
 export function describePower(power, {corruption = false, level = 1} = {}) {
   const currentLevel = Math.max(1, Math.trunc(Number(level)) || 1);
   const text = (corruption ? power.flaw : power.benefit)
-    .replaceAll("ceil(уровень / 2) − 1", String(Math.max(2, Math.ceil(currentLevel / 2) - 1)))
-    .replaceAll("ceil(уровень / 2)", String(Math.ceil(currentLevel / 2)))
-    .replaceAll("floor(уровень / 2)", String(Math.floor(currentLevel / 2)));
-  const title = `${corruption ? "Изъян порока" : "Форма эссенции"}: ${powerLabel(power)}`;
+    .replaceAll(t("Formula.RankMinusOne"), String(Math.max(2, Math.ceil(currentLevel / 2) - 1)))
+    .replaceAll(t("Formula.Rank"), String(Math.ceil(currentLevel / 2)))
+    .replaceAll(t("Formula.HalfLevel"), String(Math.floor(currentLevel / 2)));
+  const title = `${corruption ? t("Effect.Corruption") : t("Effect.Essence")}: ${powerLabel(power)}`;
   const details = [
-    ["Длительность", corruption ? "Без ограничения, до удаления эффекта" : "1 минута"],
-    ["Применяется", corruption ? "К персонажу, независимо от проявления снаряжения"
-      : equipmentLabels[power.equipment] ?? "К персонажу"],
-    ["Уровень персонажа", currentLevel]
+    [t("Preview.Duration"), corruption ? t("Preview.Unlimited") : t("Preview.Minute")],
+    [t("Preview.Applies"), corruption ? t("Preview.ActorAlways")
+      : equipmentLabels()[power.equipment] ?? t("Preview.Actor")],
+    [t("Preview.Level"), currentLevel]
   ];
   let extra = "";
   if (!corruption && ["planar-bond", "planar-pain"].includes(power.id)) {
-    extra += `<p><strong>Доступные типы урона:</strong> ${Object.values(DAMAGE_TYPES).map(escapeHTML).join(", ")}.</p>`;
+    extra += `<p><strong>${escapeHTML(t("Preview.DamageTypes"))}</strong> ${Object.values(DAMAGE_TYPES).map(escapeHTML).join(", ")}.</p>`;
   }
-  if (!corruption && power.id === "planar-bond") extra += `<p><strong>Сопротивление на этом уровне:</strong> ${currentLevel + 2}.</p>`;
-  if (!corruption && power.id === "resolute-defiance") extra += `<p><strong>Прибавка к текущим и максимальным ОЗ выбранного щита:</strong> ${currentLevel + 2}.</p>`;
+  if (!corruption && power.id === "planar-bond") extra += `<p><strong>${escapeHTML(t("Preview.Resistance"))}</strong> ${currentLevel + 2}.</p>`;
+  if (!corruption && power.id === "resolute-defiance") extra += `<p><strong>${escapeHTML(t("Preview.ShieldHP"))}</strong> ${currentLevel + 2}.</p>`;
   const img = powerIcon(power.id, corruption);
   return {title, img, content: `<article class="soulforger-essence-description">
     <img class="soulforger-essence-description-image" src="${escapeHTML(img)}" alt="">
@@ -38,7 +39,7 @@ export function describePower(power, {corruption = false, level = 1} = {}) {
 export function powerChoices({corruption = false, level = 1} = {}) {
   return POWERS.map((power) => ({
     value: power.id,
-    label: corruption ? `Изъян: ${powerLabel(power)}` : powerLabel(power),
+    label: corruption ? t("Preview.FlawChoice", {power: powerLabel(power)}) : powerLabel(power),
     img: powerIcon(power.id, corruption),
     description: describePower(power, {corruption, level})
   }));
@@ -74,8 +75,8 @@ export function renderChoiceContent(title, choices, message = "") {
         </div>
       </div>
       ${choices.some((choice) => choice.description) ? `<button type="button" class="soulforger-essence-info"
-        data-soulforger-description="selected" aria-haspopup="dialog" title="Открыть описание"
-        aria-label="${escapeHTML(`Открыть описание: ${first?.label ?? ""}`)}">
+        data-soulforger-description="selected" aria-haspopup="dialog" title="${escapeHTML(t("Preview.Open"))}"
+        aria-label="${escapeHTML(t("Preview.OpenNamed", {name: first?.label ?? ""}))}">
         <i class="fa-solid fa-info-circle" aria-hidden="true"></i>
       </button>` : ""}
     </div></div>`;
@@ -114,7 +115,7 @@ export function bindChoiceDescriptions(root, choices, openDescription) {
     for (const option of optionButtons) option.setAttribute("aria-selected", String(option.dataset.soulforgerOption === field.value));
     if (info) {
       info.disabled = !selected.description;
-      info.setAttribute("aria-label", `Открыть описание: ${selected.label}`);
+      info.setAttribute("aria-label", t("Preview.OpenNamed", {name: selected.label}));
     }
   }
   function positionList() {
