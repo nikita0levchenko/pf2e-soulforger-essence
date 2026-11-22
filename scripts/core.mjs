@@ -2,7 +2,7 @@
 import {t, language, translate} from "./i18n.mjs";
 import {ESSENCE_ICON, CORRUPTION_ICON, STASIS_ICON, IMMOBILIZED_ICON, powerIcon} from "./icons.mjs";
 export const MODULE = "soulforger-essence";
-export const VERSION = "1.3.1";
+export const VERSION = "1.3.2";
 export const ICON = ESSENCE_ICON;
 export const IDS = Object.freeze({
   feat: "SEssenceFeat0001", flaw: "SEssenceFlaw0001",

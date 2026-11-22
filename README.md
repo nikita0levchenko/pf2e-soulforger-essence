@@ -2,7 +2,17 @@
 
 A custom ability for Foundry VTT 14 / Pathfinder 2e 8.6.1, with English and Russian localization.
 
+## Update 1.3.2
+
+Planar Pain’s corruption flaw now triggers after weapon and unarmed attack damage is actually applied, including basic unarmed attacks and attacks granted by feats or effects. It identifies the attacker from PF2e’s saved damage origin, so temporary attacks do not require an embedded weapon item. The attacker takes 2 damage of the last selected type once per damage application. Healing, fully prevented damage, spell damage, and the flaw’s own damage do not trigger it.
+
+Replace the module folder and reload the world. Existing Planar Pain flaw effects use the fix automatically; they do not need to be removed or reapplied.
+
 ## Update 1.3.1
+
+The module’s item folder now uses yellow (`#ffd500`). On world load, the active GM automatically updates an existing module folder that still uses the previous purple default (`#684a91`). Custom folder names and other custom colors are preserved.
+
+## Update 1.3.0
 
 The module supports English and Russian through Foundry’s native localization system. Dialogs, buttons, accessibility labels, all 13 essence powers and 13 corruption flaws, notifications, chat cards, action/effect names and descriptions, and temporary spell names are translated. English is the fallback for unsupported languages.
 
@@ -127,8 +137,8 @@ Reference item: a Bespell Strikes export from Foundry 14.369, PF2e 8.6.1. The `s
 
 Local JavaScript syntax checks and automated tests cover effect construction, item filtering, selection cancellation, the daily use counter, rollback on error, all 26 effect variants, and protection against double-click activation. Workflow tests use mocked Foundry APIs. The module has not been run inside a live Foundry client; interaction with the modules used in a particular world requires testing in that world.
 
-Version 1.2.0 checks cover image dropdowns, all 26 descriptions, changing the selected option, previewing descriptions without expending a use, keyboard controls, closing the dropdown, rebinding event handlers, and updating icons on existing effects. DOM checks use LinkeDOM; the remaining checks use mocked Foundry APIs. The original 92-test suite covered those changes. The current 139-test suite also covers the shield changes, both languages, translation completeness and placeholders, all English activations, localized generated-item migration, preservation of custom text and resources, and native localization integration. All 139 local tests pass.
+Version 1.2.0 checks cover image dropdowns, all 26 descriptions, changing the selected option, previewing descriptions without expending a use, keyboard controls, closing the dropdown, rebinding event handlers, and updating icons on existing effects. DOM checks use LinkeDOM; the remaining checks use mocked Foundry APIs. The original 92-test suite covered those changes. The current 160-test suite also covers the shield changes, both languages, translation completeness and placeholders, all English activations, localized generated-item migration, preservation of custom text and resources, native localization integration, and Planar Pain’s weapon/unarmed damage triggers, source ownership, and duplicate prevention. All 160 local tests pass.
 
 To run the local checks, install the development dependencies with `npm install --ignore-scripts`, run `npm run build`, then run `npm test`. These dependencies are not required to use the module in Foundry.
 
-Rules: https://2e.aonprd.com/Archetypes.aspx?ID=393 and https://2e.aonprd.com/Rules.aspx?ID=3689. System source code: https://github.com/foundryvtt/pf2e. The game mechanics described belong to Pathfinder and Paizo; the module is a separate custom software implementation, implemented by daion_anri.
+Rules: https://2e.aonprd.com/Archetypes.aspx?ID=393 and https://2e.aonprd.com/Rules.aspx?ID=3689. System source code: https://github.com/foundryvtt/pf2e. The game mechanics described belong to Pathfinder and Paizo; the module is a separate custom software implementation, implemented by [daion_anri](https://github.com/nikita0levchenko).
