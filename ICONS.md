@@ -1,4 +1,4 @@
-# Effect Icons — Version 1.3.1
+# Effect Icons — Version 1.3.2
 
 All files listed here are included in the standard PF2e system package. The module references paths under `systems/pf2e/icons/`; individual image files are not copied into the module. Inventory items retain the icons stored in their own `img` fields.
 

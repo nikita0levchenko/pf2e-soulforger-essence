@@ -2,7 +2,7 @@
   "id": "soulforger-essence",
   "title": "Soulforger: effect automation",
   "description": "Two PF2e actions: choosing an essence power and applying its corruption flaw. English and Russian localization.",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "authors": [
     {
       "name": "daion_anri",
@@ -35,7 +35,7 @@
   "socket": true,
   "readme": "https://github.com/nikita0levchenko/soulforger-essence_pf2e_module/blob/master/README.md",
   "manifest": "https://github.com/nikita0levchenko/soulforger-essence_pf2e_module/releases/latest/download/module.json",
-  "download": "https://github.com/nikita0levchenko/soulforger-essence_pf2e_module/releases/download/v1.3.1/soulforger-essence.zip",
+  "download": "https://github.com/nikita0levchenko/soulforger-essence_pf2e_module/releases/download/v1.3.2/soulforger-essence.zip",
   "url": "https://github.com/nikita0levchenko/soulforger-essence_pf2e_module",
   "languages": [
     {

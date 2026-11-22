@@ -645,10 +645,16 @@ async function applyPainForMessage(message) {
   const applied = message.flags.pf2e?.appliedDamage;
   if (contextOf(message).type !== "damage-taken" || applied?.isHealing ||
       !((applied?.updates ?? []).some((u) => u.value > 0) || applied?.shield?.damage > 0)) return;
-  const item = message.item, actor = item?.actor;
-  if (!actor || !["weapon", "melee"].includes(item.type)) return;
+  // A damage-taken message speaks as the defender. Synthetic unarmed weapons
+  // may have no embedded item, or their UUID may resolve to the granting feat.
+  const origin = message.flags.pf2e.origin;
+  const item = origin?.actor ? null : message.item;
+  if (!["weapon", "melee"].includes(origin?.type ?? item?.type)) return;
+  const actor = origin?.actor ? await fromUuid(origin.actor) : item?.actor;
+  if (actor?.documentName !== "Actor") return;
   const flaws = effectsOf(actor, "corruption", "planar-pain");
-  if (!flaws.length) return;
+  // Resolving the origin is asynchronous: recheck before claiming the message.
+  if (!flaws.length || painRequests.has(message.id)) return;
   if (!actor.isOwner) {
     if (game.users.activeGM) game.socket.emit(`module.${MODULE}`, {type: "pain", messageId: message.id});
     return;
