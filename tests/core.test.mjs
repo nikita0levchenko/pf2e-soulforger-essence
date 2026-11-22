@@ -1,4 +1,5 @@
-import {test} from "node:test";
+import {test, beforeEach} from "node:test";
+beforeEach(() => {globalThis.game = {i18n: {lang: "ru", localize: (key) => key}};});
 import assert from "node:assert/strict";
 import {
   MODULE, IDS, POWERS, DAMAGE_TYPES, eligibleItems, essenceRules, corruptionRules,
@@ -149,3 +150,4 @@ test("corruption application does not consume manifestation frequency", async ()
     consume: async () => assert.fail("consume"), rollback: async () => assert.fail("rollback")});
   assert.equal(result.status, "applied");
 });
+
